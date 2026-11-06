@@ -1,8 +1,8 @@
+
 <div align="center">
   <img src="ic_launcher.png" alt="Nativara IDE Logo" width="120" />
   <h1>Nativara IDE</h1>
   <p><b>C/C++ nativo direto no seu Android.</b></p>
-
   <p>
     <a href="https://nativara-ide.pages.dev/"><b>🌐 Site Oficial</b></a> •
     <a href="https://github.com/MAIKOTS/AML-IDE-Android/releases/download/v1.00/app-debug-v1.00.apk"><b>⬇️ Baixar APK</b></a> •
@@ -28,8 +28,7 @@ O **Nativara IDE** é uma IDE Android para desenvolvimento em **C/C++** direto n
 ## ✨ Recursos
 
 - 🖥️ **Compilador Clang/LLVM nativo** rodando dentro do app (ARM64 e ARM32)
-- 📝 **Editor com abas** e destaque de sintaxe configurável via JSON
-  (C, C++, Java, XML, JSON, YAML, Shell, PowerShell, Markdown, Gradle, Properties)
+- 📝 **Editor com abas** e destaque de sintaxe configurável via JSON (C, C++, Java, XML, JSON, YAML, Shell, PowerShell, Markdown, Gradle, Properties)
 - ⌨️ **Teclado otimizado**: O layout se ajusta perfeitamente para que o teclado virtual não cubra o seu código.
 - 🛠️ **Modo Imersivo Completo**: Tela cheia, sem barras de navegação, tela sempre ligada e suporte a Notch (Edge-to-Edge).
 - ⚙️ **Menu de Configurações** integrado (notificações, checagem de atualizações e informações da versão)
@@ -72,7 +71,7 @@ app/src/main/java/
 └── globalclass/             → Configurações globais e utilitários
 ```
 
-🧠 Pipeline de Compilação
+## 🧠 Pipeline de Compilação
 
 A compilação é dividida em etapas bem definidas, garantindo estabilidade independente da ABI:
 
@@ -83,7 +82,7 @@ A compilação é dividida em etapas bem definidas, garantindo estabilidade inde
 
 ---
 
-🚀 Como clonar e compilar
+## 🚀 Como clonar e compilar
 
 ⚠️ Este repositório usa Git LFS para armazenar as bibliotecas nativas (.so, .a, .o) do Clang/LLVM. Sem o LFS, os binários vêm apenas como ponteiros de texto e o app não compila.
 
@@ -128,7 +127,7 @@ Para instalar direto no dispositivo conectado via USB:
 
 ---
 
-📦 Tamanho do APK e Recursos
+## 📦 Tamanho do APK e Recursos
 
 Para manter o APK final enxuto, o app embarca o toolchain Clang/LLVM essencial e baixa o sysroot e os headers de um repositório remoto na primeira execução.
 
@@ -137,7 +136,7 @@ APK compactado ~66 MB
 Conteúdo descompactado ~184 MB
 Recursos baixados na 1ª execução ~100 MB
 
-📂 Estrutura de jniLibs
+## 📂 Estrutura de jniLibs
 
 ```text
 app/src/main/jniLibs/arm64-v8a/
@@ -153,7 +152,7 @@ app/src/main/jniLibs/arm64-v8a/
 
 ---
 
-🤝 Contribuindo
+## 🤝 Contribuindo
 
 1. Faça um fork do projeto.
 2. Crie uma branch para sua feature (git checkout -b feature/minha-feature).
@@ -165,19 +164,12 @@ Lembre-se de ter o Git LFS instalado antes de clonar o seu fork.
 
 ---
 
-📜 Licença
+## 📜 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
+
+---
 
 <div align="center">
   <p>Desenvolvido com dedicação por <a href="https://github.com/MAIKOTS"><b>MaikoTS</b></a></p>
 </div>
-```
-
-O que eu melhorei:
-
-1. Cabeçalho centralizado: Adicionei o ícone oficial (puxando direto do seu site no Cloudflare/GitHub Pages), o nome novo e botões grandes de "Site Oficial" e "Baixar APK".
-2. Nota de transição: Deixei claro logo no topo que o nome mudou de AML-IDE para Nativara IDE, preservando o histórico e o SEO para quem procura por mods de GTA.
-3. Novas Features: Adicionei os novos recursos que implementamos hoje (Teclado otimizado, Modo Imersivo 100% e Menu de Configurações).
-4. Organização do Texto: Usei tabelas para os tamanhos do APK, separei melhor os blocos de código (```bash) e ajustei a árvore de arquivos para ficar mais legível.
-5. Badges: Deixei os selos de status (License, Platform, Build) alinhados no topo para dar aquele visual de projeto Open Source sério.
