@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://maikots.github.io/nativara-site/ic_launcher.png" alt="Nativara IDE Logo" width="120" />
+  <img src="https://nativara-ide.pages.dev/#" alt="Nativara IDE Logo" width="120" />
   <h1>Nativara IDE</h1>
   <p><b>C/C++ nativo direto no seu Android.</b></p>
 
