@@ -5,7 +5,7 @@
 
   <p>
     <a href="https://nativara-ide.pages.dev/"><b>🌐 Site Oficial</b></a> •
-    <a href="https://github.com/MAIKOTS/AML-IDE-Android/releases"><b>⬇️ Baixar APK</b></a> •
+    <a href="https://github.com/MAIKOTS/AML-IDE-Android/releases/download/v1.00/app-debug-v1.00.apk"><b>⬇️ Baixar APK</b></a> •
     <a href="https://github.com/MAIKOTS/AML-IDE-Android/issues"><b>🐛 Reportar Bug</b></a>
   </p>
 
