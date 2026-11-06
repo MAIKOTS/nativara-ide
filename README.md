@@ -4,7 +4,7 @@
   <p><b>C/C++ nativo direto no seu Android.</b></p>
 
   <p>
-    <a href="https://maikots.github.io/nativara-site/"><b>🌐 Site Oficial</b></a> •
+    <a href="https://nativara-ide.pages.dev/"><b>🌐 Site Oficial</b></a> •
     <a href="https://github.com/MAIKOTS/AML-IDE-Android/releases"><b>⬇️ Baixar APK</b></a> •
     <a href="https://github.com/MAIKOTS/AML-IDE-Android/issues"><b>🐛 Reportar Bug</b></a>
   </p>
