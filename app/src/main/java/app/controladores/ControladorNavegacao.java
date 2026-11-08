@@ -225,39 +225,45 @@ public class ControladorNavegacao {
     }
 
     // ==========================================================
-    //  Configuração de Projeto
-    // ==========================================================
+//  Configuração de Projeto (Agora como Dialog)
+// ==========================================================
 
-    public void abrirConfigProjeto(File pastaProjeto) {
-        if (pastaProjeto == null || !pastaProjeto.exists()) {
-            host.toast("Projeto não encontrado.");
-            return;
-        }
-
-        TelaConfigProjeto tela = new TelaConfigProjeto(atividade, pastaProjeto,
-                new TelaConfigProjeto.Acoes() {
-                    @Override
-                    public void aoSalvar(Projeto projeto) {
-                        host.toast("Configurações salvas!");
-                        if (!navegador.voltarTelaAnterior()) {
-                            navegador.navegarPara(
-                                    NavegadorTelas.EstadoTela.TELA_ESTRUTURA_PROJETO);
-                        }
-                        ModoImersivo.aplicar(atividade);
-                    }
-
-                    @Override
-                    public void aoCancelar() {
-                        if (!navegador.voltarTelaAnterior()) {
-                            navegador.navegarPara(
-                                    NavegadorTelas.EstadoTela.TELA_ESTRUTURA_PROJETO);
-                        }
-                        ModoImersivo.aplicar(atividade);
-                    }
-                });
-
-        navegador.definirViewConfig(tela.construir());
-        navegador.navegarPara(NavegadorTelas.EstadoTela.TELA_CONFIG_PROJETO);
-        ModoImersivo.aplicar(atividade);
+public void abrirConfigProjeto(File pastaProjeto) {
+    if (pastaProjeto == null || !pastaProjeto.exists()) {
+        host.toast("Projeto não encontrado.");
+        return;
     }
+
+    // 1. Cria a tela que monta o formulário e a lógica
+    TelaConfigProjeto tela = new TelaConfigProjeto(atividade, pastaProjeto, null);
+
+    // 2. Instancia o seu diálogo customizado (COM "N" - CORRIGIDO)
+    ui.dialogos.DialogoConfigProjeto dialog = new ui.dialogos.DialogoConfigProjeto(atividade, tela.construir());
+
+    // 3. Reconfigura as ações da tela para fecharem o diálogo
+    TelaConfigProjeto telaComAcoes = new TelaConfigProjeto(atividade, pastaProjeto,
+            new TelaConfigProjeto.Acoes() {
+                @Override
+                public void aoSalvar(Projeto projeto) {
+                    host.toast("Configurações salvas!");
+                    dialog.dismiss(); // Fecha o diálogo
+                }
+
+                @Override
+                public void aoCancelar() {
+                    dialog.dismiss(); // Fecha o diálogo
+                }
+            });
+
+    // 4. Injeta a nova view com as ações atualizadas no diálogo
+    dialog.setContentView(telaComAcoes.construir());
+
+    // 5. Quando o diálogo fechar, reaplica o modo imersivo no app principal
+    dialog.setOnDismissListener(d -> {
+        ModoImersivo.aplicar(atividade);
+    });
+
+    // 6. Mostra o diálogo
+    dialog.show();
+}
 }

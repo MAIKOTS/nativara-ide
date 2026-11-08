@@ -22,20 +22,9 @@
             android:layout_weight="1"
             android:letterSpacing="0.1"
             android:text="CONFIGURAÇÕES"
-            android:textColor="#F4F4F5"
+            android:textColor="#00E676"
             android:textSize="15sp"
             android:textStyle="bold" />
-
-        <ImageButton
-            android:id="@+id/configBtnFechar"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="@drawable/bg_icon_button"
-            android:contentDescription="Fechar"
-            android:padding="8dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_fechar"
-            android:tint="#A1A1AA" />
     </LinearLayout>
 
     <View
@@ -59,7 +48,7 @@
             android:paddingTop="12dp"
             android:paddingBottom="24dp">
 
-            <!-- ========== EDITOR ========== -->
+            <!-- ========== GERAL ========== -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -67,190 +56,36 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="6dp"
                 android:letterSpacing="0.15"
-                android:text="EDITOR"
+                android:text="GERAL"
                 android:textColor="#00E676"
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
-            <!-- Tamanho da fonte -->
-            <LinearLayout
-                android:id="@+id/configItemTamanhoFonte"
+            <!-- Opção: Notificações -->
+            <TextView
+                android:id="@+id/opcNotificacoes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="?android:attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="14dp">
+                android:padding="16dp"
+                android:text="Notificações"
+                android:textColor="#E4E4E7"
+                android:textSize="14sp" />
 
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginEnd="14dp"
-                    android:src="@drawable/ic_config"
-                    android:tint="#A1A1AA" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Tamanho da fonte"
-                    android:textColor="#F4F4F5"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:id="@+id/configValorTamanhoFonte"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="14sp"
-                    android:textColor="#00E676"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:typeface="monospace" />
-            </LinearLayout>
-
-            <!-- Word wrap -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="14dp">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginEnd="14dp"
-                    android:src="@drawable/ic_arquivo_generico"
-                    android:tint="#A1A1AA" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Quebra de linha automática"
-                    android:textColor="#F4F4F5"
-                    android:textSize="13sp" />
-
-                <Switch
-                    android:id="@+id/configSwitchWordWrap"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-
-            <!-- Números de linha -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="14dp">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginEnd="14dp"
-                    android:src="@drawable/ic_arquivo_cpp"
-                    android:tint="#A1A1AA" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Números de linha"
-                    android:textColor="#F4F4F5"
-                    android:textSize="13sp" />
-
-                <Switch
-                    android:id="@+id/configSwitchNumerosLinha"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-
-            <!-- ========== CONSOLE ========== -->
+            <!-- Opção: Verificar Atualizações -->
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="6dp"
-                android:letterSpacing="0.15"
-                android:text="CONSOLE"
-                android:textColor="#00E676"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-
-            <!-- Console auto-expandir -->
-            <LinearLayout
+                android:id="@+id/opcVerificarAtualizacoes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="14dp">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginEnd="14dp"
-                    android:src="@drawable/ic_terminal"
-                    android:tint="#A1A1AA" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Auto-expandir ao compilar"
-                    android:textColor="#F4F4F5"
-                    android:textSize="13sp" />
-
-                <Switch
-                    android:id="@+id/configSwitchConsoleAuto"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-
-            <!-- ========== COMPORTAMENTO ========== -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="6dp"
-                android:letterSpacing="0.15"
-                android:text="COMPORTAMENTO"
-                android:textColor="#00E676"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-
-            <!-- Salvar ao sair -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="14dp">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginEnd="14dp"
-                    android:src="@drawable/ic_guardar"
-                    android:tint="#A1A1AA" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Salvar ao trocar de aba"
-                    android:textColor="#F4F4F5"
-                    android:textSize="13sp" />
-
-                <Switch
-                    android:id="@+id/configSwitchSalvarAoSair"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="16dp"
+                android:text="Verificar atualizações"
+                android:textColor="#E4E4E7"
+                android:textSize="14sp" />
 
             <!-- ========== SOBRE ========== -->
             <TextView
@@ -265,118 +100,26 @@
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
-            <!-- Sobre a IDE -->
-            <LinearLayout
-                android:id="@+id/configItemSobre"
+            <!-- Opção: Informações da IDE -->
+            <TextView
+                android:id="@+id/opcInformacoes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="?android:attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="14dp">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginEnd="14dp"
-                    android:src="@drawable/ic_ficheiro_codigo"
-                    android:tint="#A1A1AA" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Sobre a AML IDE"
-                    android:textColor="#F4F4F5"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textColor="#6B7280"
-                    android:textSize="18sp" />
-            </LinearLayout>
-
-            <!-- GitHub -->
-            <LinearLayout
-                android:id="@+id/configItemGithub"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="14dp">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginEnd="14dp"
-                    android:src="@drawable/ic_github"
-                    android:tint="#A1A1AA" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="GitHub"
-                    android:textColor="#F4F4F5"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textColor="#6B7280"
-                    android:textSize="18sp" />
-            </LinearLayout>
-
-            <!-- Reportar bug -->
-            <LinearLayout
-                android:id="@+id/configItemReportar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="14dp">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_marginEnd="14dp"
-                    android:src="@drawable/ic_terminal"
-                    android:tint="#A1A1AA" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Reportar um bug"
-                    android:textColor="#F4F4F5"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textColor="#6B7280"
-                    android:textSize="18sp" />
-            </LinearLayout>
+                android:padding="16dp"
+                android:text="Informações da IDE"
+                android:textColor="#E4E4E7"
+                android:textSize="14sp" />
 
             <!-- Rodapé -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="32dp"
                 android:gravity="center"
-                android:text="AML IDE • v1.00\nFeito com ♥ por MaikoTS"
+                android:text="Nativara IDE • v1.00\nFeito por MaikoTS"
                 android:textColor="#3F3F46"
                 android:textSize="11sp" />
 

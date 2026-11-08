@@ -1,7 +1,6 @@
 package ui.telas;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
@@ -11,26 +10,21 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import app.R;
+import modelo.Caminhos;
+import modelo.Projeto;
 import ui.componentes.ConsoleTerminal;
 import ui.dialogos.DialogoApp;
+import ui.util.Cores;
 import app.util.CompiladorNativo;
+import app.util.ExecutorConsole;
 import app.util.GerenciadorDeArquivos;
 import ui.util.GerenciadorLogsConsole;
 import app.util.GerenciadorNDK;
 
-/**
- * Ferramentas da IDE.
- *
- * Central de ferramentas e diagnóstico:
- *  - Status da toolchain
- *  - Verificar / baixar recursos
- *  - Compilar main.cpp de teste
- *  - Abrir o explorador de arquivos
- *  - Ver logs em um ConsoleTerminal ao vivo
- */
 public class FerramentasDaIDE {
 
     public interface Acoes {
@@ -38,11 +32,6 @@ public class FerramentasDaIDE {
         void aoAbrirExploradorFiles();
         void aoAbrirRecursos();
     }
-
-    private static final int COR_OK     = 0xFF00E676;
-    private static final int COR_AVISO  = 0xFFFFC107;
-    private static final int COR_ERRO   = 0xFFFF5252;
-    private static final int COR_NEUTRO = 0xFFA1A1AA;
 
     private final Context ctx;
     private final Acoes acoes;
@@ -64,55 +53,51 @@ public class FerramentasDaIDE {
         this.acoes = acoes;
     }
 
-    // ==========================================================
-    //  Construção da tela
-    // ==========================================================
-
     public View construir() {
-    raizView = LayoutInflater.from(ctx)
-            .inflate(R.layout.tela_ferramentas_ide, null, false);
+        raizView = LayoutInflater.from(ctx)
+                .inflate(R.layout.tela_ferramentas_ide, null, false);
 
-    // Bind
-    console        = raizView.findViewById(R.id.ferramentasConsole);
-    statusTopo     = raizView.findViewById(R.id.ferramentasStatus);
-    statusDetalhe  = raizView.findViewById(R.id.ferramentasStatusDetalhe);
-    statusIcone    = raizView.findViewById(R.id.ferramentasStatusIcone);
-    btnPreparar    = raizView.findViewById(R.id.btnFerramentasPreparar);
-    btnCompilar    = raizView.findViewById(R.id.btnFerramentasCompilar);
-    btnInspecionar = raizView.findViewById(R.id.btnFerramentasInspecionar);
+        console        = raizView.findViewById(R.id.ferramentasConsole);
+        statusTopo     = raizView.findViewById(R.id.ferramentasStatus);
+        statusDetalhe  = raizView.findViewById(R.id.ferramentasStatusDetalhe);
+        statusIcone    = raizView.findViewById(R.id.ferramentasStatusIcone);
+        btnPreparar    = raizView.findViewById(R.id.btnFerramentasPreparar);
+        btnCompilar    = raizView.findViewById(R.id.btnFerramentasCompilar);
+        btnInspecionar = raizView.findViewById(R.id.btnFerramentasInspecionar);
 
-    raizView.findViewById(R.id.btnFerramentasRecursos)
-            .setOnClickListener(v -> {
-                if (acoes != null) acoes.aoAbrirRecursos();
-            });
+        raizView.findViewById(R.id.btnFerramentasRecursos)
+                .setOnClickListener(v -> {
+                    if (acoes != null) acoes.aoAbrirRecursos();
+                });
 
-    // Voltar
-    raizView.findViewById(R.id.btnFerramentasVoltar).setOnClickListener(v -> {
-        if (operacaoEmAndamento.get()) {
-            log("! Operação em andamento. Aguarde o fim.");
-            return;
-        }
-        if (acoes != null) acoes.aoVoltar();
-    });
+        raizView.findViewById(R.id.btnFerramentasVoltar).setOnClickListener(v -> {
+            if (operacaoEmAndamento.get()) {
+                log("! Operação em andamento. Aguarde o fim.");
+                return;
+            }
+            if (acoes != null) acoes.aoVoltar();
+        });
 
-    // Ações
-    btnPreparar.setOnClickListener(v -> verificarToolchain());
-    btnCompilar.setOnClickListener(v -> iniciarCompilacao());
-    btnInspecionar.setOnClickListener(v -> {
-        if (acoes != null) acoes.aoAbrirExploradorFiles();
-    });
+        btnPreparar.setOnClickListener(v -> verificarToolchain());
 
-    // Estado inicial
-    atualizarStatusTopo();
-    reabilitarBotoes();
+        // ★★★★★ TEMPORÁRIO — teste do modo console ★★★★★
+        // Quando terminar o teste, troque por: iniciarCompilacao()
+        btnCompilar.setOnClickListener(v -> testarModoConsole());
 
-    log("Ferramentas da IDE iniciadas.");
-    log("ABI: " + GerenciadorNDK.obterAbi(ctx));
-    log("Status: " + (GerenciadorNDK.estaPronta(ctx)
-            ? "toolchain pronta" : "toolchain não instalada"));
+        btnInspecionar.setOnClickListener(v -> {
+            if (acoes != null) acoes.aoAbrirExploradorFiles();
+        });
 
-    return raizView;
-}
+        atualizarStatusTopo();
+        reabilitarBotoes();
+
+        log("Ferramentas da IDE iniciadas.");
+        log("ABI: " + GerenciadorNDK.obterAbi(ctx));
+        log("Status: " + (GerenciadorNDK.estaPronta(ctx)
+                ? "toolchain pronta" : "toolchain não instalada"));
+
+        return raizView;
+    }
 
     // ==========================================================
     //  Verificar toolchain
@@ -132,13 +117,13 @@ public class FerramentasDaIDE {
         boolean temLibs    = (libs    != null && libs.isDirectory());
 
         if (temSysroot) {
-            log("✓ Sysroot:  " + sysroot.getAbsolutePath());
+            log("✓ Sysroot:  " + Caminhos.exibir(sysroot));
         } else {
             log("✗ Sysroot não instalado");
         }
 
         if (temLibs) {
-            log("✓ Libs:     " + libs.getAbsolutePath());
+            log("✓ Libs:     " + Caminhos.exibir(libs));
         } else {
             log("✗ Libs extras não instaladas");
         }
@@ -171,15 +156,14 @@ public class FerramentasDaIDE {
     }
 
     // ==========================================================
-    //  Compilação de teste
+    //  Compilação de teste (modo MOD — comportamento antigo)
     // ==========================================================
 
     private void iniciarCompilacao() {
-        File pastaTeste = new File(ctx.getFilesDir(), "teste_build");
-        File pastaSrc   = new File(pastaTeste, "src");
-        File pastaOut   = new File(pastaTeste, "out");
+        File pastaTeste = Caminhos.testeBuild(ctx);
+        File pastaOut   = Caminhos.out(ctx);
+        File pastaSrc   = new File(pastaTeste, Caminhos.SRC);
         pastaSrc.mkdirs();
-        pastaOut.mkdirs();
 
         File fonte = new File(pastaSrc, "main.cpp");
         String codigo =
@@ -226,7 +210,107 @@ public class FerramentasDaIDE {
     }
 
     // ==========================================================
-    //  Status e botões
+    //  Teste do modo CONSOLE (runner + dlopen)
+    // ==========================================================
+
+    private void testarModoConsole() {
+        // ---------- 1. Cria um programa console simples ----------
+        File pastaTeste = Caminhos.testeBuild(ctx);
+        File pastaSrc   = new File(pastaTeste, Caminhos.SRC);
+        pastaSrc.mkdirs();
+
+        File fonte = new File(pastaSrc, "console_main.cpp");
+        String codigo =
+                "#include <cstdio>\n" +
+                "int main(int argc, char** argv) {\n" +
+                "    printf(\"Ola do console!\\n\");\n" +
+                "    printf(\"argc = %d\\n\", argc);\n" +
+                "    for (int i = 0; i < argc; i++) {\n" +
+                "        printf(\"  argv[%d] = %s\\n\", i, argv[i]);\n" +
+                "    }\n" +
+                "    fprintf(stderr, \"isso vai pro stderr\\n\");\n" +
+                "    return 42;\n" +
+                "}\n";
+
+        if (!GerenciadorDeArquivos.salvarArquivo(fonte, codigo)) {
+            log("✗ Não foi possível criar console_main.cpp");
+            return;
+        }
+
+        // ---------- 2. Monta Projeto CONSOLE ----------
+        Projeto p = new Projeto();
+        p.pastaRaiz = pastaTeste;
+        p.nome      = "teste_console";
+        p.libNome   = "libteste_console";
+        p.tipoBuild = Projeto.TipoBuild.CONSOLE;
+
+        p.abis = new ArrayList<>();
+        p.abis.add("arm64-v8a");
+
+        operacaoEmAndamento.set(true);
+        travarBotoesDuranteOperacao();
+
+        final GerenciadorLogsConsole logDetalhado =
+                new GerenciadorLogsConsole(ctx, console);
+
+        // ---------- 3. Compila ----------
+        CompiladorNativo.compilarProjeto(ctx, p,
+                new CompiladorNativo.ResultadoCompilacao() {
+
+                    @Override
+                    public void aoSucesso(File arquivoSo) {
+                        // ---------- 4. Executa em thread separada ----------
+                        new Thread(() -> {
+                            try {
+                                ExecutorConsole.Resultado r =
+                                        ExecutorConsole.executar(
+                                                ctx,
+                                                arquivoSo,
+                                                new String[]{"alpha", "beta"},
+                                                null,
+                                                logDetalhado);
+
+                                handlerUI.post(() -> {
+                                    console.secao("RESULTADO DO RUNNER");
+                                    console.info("Exit code: " + r.codigoSaida);
+
+                                    if (!r.stdout.isEmpty()) {
+    console.secao("stdout");
+    console.cru(r.stdout);
+}
+if (!r.stderr.isEmpty()) {
+    console.secao("stderr");
+    console.cru(r.stderr);
+}
+
+                                    operacaoEmAndamento.set(false);
+                                    reabilitarBotoes();
+                                });
+
+                            } catch (Exception e) {
+                                handlerUI.post(() -> {
+                                    log("✗ Exceção ao executar: " + e.getMessage());
+                                    e.printStackTrace();
+                                    operacaoEmAndamento.set(false);
+                                    reabilitarBotoes();
+                                });
+                            }
+                        }, "teste-console").start();
+                    }
+
+                    @Override
+                    public void aoErro(String mensagemErro) {
+                        handlerUI.post(() -> {
+                            operacaoEmAndamento.set(false);
+                            reabilitarBotoes();
+                        });
+                    }
+                },
+                logDetalhado);
+    }
+
+    // ==========================================================
+    //  Estado / UI helpers
     // ==========================================================
 
     private void travarBotoesDuranteOperacao() {
@@ -238,17 +322,11 @@ public class FerramentasDaIDE {
     private void reabilitarBotoes() {
         boolean pronta = GerenciadorNDK.estaPronta(ctx);
 
-        // Verificar: só se NÃO está pronta
         setCardHabilitado(btnPreparar, !pronta);
-
-        // Compilar teste: só se está pronta
         setCardHabilitado(btnCompilar, pronta);
-
-        // Inspecionar: sempre
         setCardHabilitado(btnInspecionar, true);
     }
 
-    /** Aplica o estado visual (alpha + clickable) de um card de ação. */
     private void setCardHabilitado(View card, boolean habilitado) {
         if (card == null) return;
         card.setEnabled(habilitado);
@@ -259,28 +337,27 @@ public class FerramentasDaIDE {
     private void atualizarStatusTopo() {
         if (operacaoEmAndamento.get()) {
             aplicarStatus("Operação em andamento...",
-                    "Aguarde a conclusão", COR_AVISO);
+                    "Aguarde a conclusão", Cores.AMARELO);
             return;
         }
 
         if (GerenciadorNDK.estaPronta(ctx)) {
             aplicarStatus("Toolchain pronta",
                     "Clang 14 • NDK r24 • ABI " + GerenciadorNDK.obterAbi(ctx),
-                    COR_OK);
+                    Cores.VERDE);
         } else {
             aplicarStatus("Toolchain não instalada",
                     "Baixe os recursos em Ferramentas da IDE → Recursos",
-                    COR_AVISO);
+                    Cores.AMARELO);
         }
     }
 
-    /** Aplica status com ícone, texto e cor. */
     private void aplicarStatus(String titulo, String detalhe, int cor) {
         if (statusTopo != null) statusTopo.setText(titulo);
         if (statusDetalhe != null) statusDetalhe.setText(detalhe);
         if (statusIcone != null) {
             statusIcone.setColorFilter(cor);
-            if (cor == COR_OK) {
+            if (cor == Cores.VERDE) {
                 statusIcone.setImageResource(R.drawable.ic_pasta_aberta);
             } else {
                 statusIcone.setImageResource(R.drawable.ic_config);
@@ -288,29 +365,8 @@ public class FerramentasDaIDE {
         }
     }
 
-    // ==========================================================
-    //  Helpers
-    // ==========================================================
-
     private void log(String linha) {
         if (console == null) return;
         console.info(linha);
-    }
-
-    private String formatarTamanho(long bytes) {
-        if (bytes < 1024) return bytes + " B";
-        if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
-        if (bytes < 1024L * 1024 * 1024) {
-            return String.format("%.1f MB", bytes / (1024.0 * 1024));
-        }
-        return String.format("%.2f GB", bytes / (1024.0 * 1024 * 1024));
-    }
-
-    private String formatarDuracao(long ms) {
-        if (ms < 1000) return ms + "ms";
-        if (ms < 60_000) return String.format("%.1fs", ms / 1000.0);
-        long min = ms / 60_000;
-        long seg = (ms % 60_000) / 1000;
-        return min + "m " + seg + "s";
     }
 }

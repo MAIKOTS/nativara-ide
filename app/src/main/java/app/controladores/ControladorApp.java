@@ -14,25 +14,16 @@ import ui.telas.MontadorDeEditorComAbas;
 import ui.telas.MontadorDeEstrutura;
 import ui.telas.MontadorDeHome;
 import ui.telas.MontadorDeSeletorDeProjetos;
+import ui.componentes.MenuLateralConfiguracoes; // <-- IMPORT ADICIONADO
 
 /**
  * Orquestrador principal do app.
- *
- * Delega responsabilidades para:
- *  - ControladorNavegacao  → abrir telas navegáveis
- *  - ControladorMontadores → criar/gerenciar montadores
- *  - ControladorPaineis    → criar/gerenciar drawers
- *  - ControladorDialogos   → notificações pontuais
- *
- * Aqui só fica:
- *  - Ciclo de vida (onBackPressed, onWindowFocusChanged)
- *  - Roteamento dos callbacks dos 3 sub-controladores
- *  - Utilitários (toast, abrir URL, mostrar Sobre)
  */
 public class ControladorApp
         implements ControladorNavegacao.Host,
                    ControladorMontadores.Host,
-                   ControladorPaineis.Host {
+                   ControladorPaineis.Host,
+                   MenuLateralConfiguracoes.AcoesConfig { // <-- IMPLEMENTA A INTERFACE AQUI
 
     private static final String URL_GITHUB = "https://github.com/MaikoTS";
 
@@ -55,6 +46,9 @@ public class ControladorApp
         // 1. Sub-controladores
         this.montadores = new ControladorMontadores(atividade, navegador, this);
         this.navegacao  = new ControladorNavegacao (atividade, navegador, this);
+        
+        // O ControladorPaineis agora vai precisar receber "this" para saber quem 
+        // implementa as ações do menu de configurações (mais abaixo explicamos isso)
         this.paineis    = new ControladorPaineis    (atividade, navegador, this);
 
         // 2. Dialogos (só notificam)
@@ -113,26 +107,22 @@ public class ControladorApp
     // ==========================================================
 
     public boolean aoVoltar() {
-        // 1. Drawer direito (config) aberto? Fecha.
         if (paineis.isDireitoAberto()) {
             paineis.fecharDireito();
             ModoImersivo.aplicar(atividade);
             return true;
         }
 
-        // 2. Drawer esquerdo (menu) aberto? Fecha.
         if (paineis.isEsquerdoAberto()) {
             paineis.fecharEsquerdo();
             ModoImersivo.aplicar(atividade);
             return true;
         }
 
-        // 3. Está na Home? Deixa o Android fechar o app.
         if (navegador.obterTelaAtual() == NavegadorTelas.EstadoTela.TELA_INICIAL) {
             return false;
         }
 
-        // 4. Não é Home: volta uma tela.
         navegador.voltarTelaAnterior();
 
         if (navegador.obterTelaAtual() == NavegadorTelas.EstadoTela.TELA_INICIAL) {
@@ -146,17 +136,13 @@ public class ControladorApp
         ModoImersivo.aplicar(atividade);
     }
 
-    // ==========================================================
-    //  Reação a mudanças de tela
-    // ==========================================================
-
     private void aoMudarTela(NavegadorTelas.EstadoTela novaTela) {
         boolean ehHome = (novaTela == NavegadorTelas.EstadoTela.TELA_INICIAL);
         paineis.setHabilitadoDireito(ehHome);
     }
 
     // ==========================================================
-    //  Host: ControladorMontadores
+    //  Host: ControladorMontadores e ControladorNavegacao e Painéis
     // ==========================================================
 
     @Override
@@ -166,14 +152,12 @@ public class ControladorApp
 
     @Override
     public void aoAbrirMenuDireito() {
-        // Só abre se estiver na Home
         if (navegador.obterTelaAtual() != NavegadorTelas.EstadoTela.TELA_INICIAL) {
             return;
         }
         paineis.abrirDireito();
     }
 
-    /** ★ NOVO — abre a tela de formulário "Novo Projeto" */
     @Override
     public void aoCliqueCriarNovoProjeto() {
         navegacao.abrirNovoProjeto();
@@ -205,10 +189,6 @@ public class ControladorApp
 
     @Override
     public void aoFecharEditor() {
-        // Respeita a pilha:
-        //  - Veio da ESTRUTURA → volta pra ela
-        //  - Veio do menu → volta pra HOME
-        //  - Sem pilha → HOME por padrão
         if (!navegador.voltarTelaAnterior()) {
             navegador.navegarPara(NavegadorTelas.EstadoTela.TELA_INICIAL);
         }
@@ -235,14 +215,8 @@ public class ControladorApp
         ModoImersivo.aplicar(atividade);
     }
 
-    // ==========================================================
-    //  Host: ControladorPaineis
-    // ==========================================================
-
     @Override
     public void aoNavegarPeloMenu(NavegadorTelas.EstadoTela tela) {
-        // Se não é Home, reseta a pilha antes (volta pra HOME "limpa")
-        // Assim o botão Voltar da nova tela sempre volta pra Home.
         if (tela != NavegadorTelas.EstadoTela.TELA_INICIAL) {
             navegador.navegarPara(NavegadorTelas.EstadoTela.TELA_INICIAL);
         } else {
@@ -282,29 +256,14 @@ public class ControladorApp
         abrirUrl(URL_GITHUB + "/issues");
     }
 
-    // ==========================================================
-    //  Host: ControladorNavegacao
-    // ==========================================================
-
     @Override
-    public MontadorDeHome montadorHome() {
-        return montadores.home();
-    }
-
+    public MontadorDeHome montadorHome() { return montadores.home(); }
     @Override
-    public MontadorDeSeletorDeProjetos montadorSeletor() {
-        return montadores.seletor();
-    }
-
+    public MontadorDeSeletorDeProjetos montadorSeletor() { return montadores.seletor(); }
     @Override
-    public MontadorDeEstrutura montadorEstrutura() {
-        return montadores.estrutura();
-    }
-
+    public MontadorDeEstrutura montadorEstrutura() { return montadores.estrutura(); }
     @Override
-    public MontadorDeEditorComAbas montadorEditor() {
-        return montadores.editor();
-    }
+    public MontadorDeEditorComAbas montadorEditor() { return montadores.editor(); }
 
     @Override
     public void toast(String msg) {
@@ -312,15 +271,43 @@ public class ControladorApp
     }
 
     // ==========================================================
+    // ★ NOVO: Implementação da Interface AcoesConfig
+    // ==========================================================
+
+    @Override
+    public void aoFechar() {
+        paineis.fecharDireito();
+        ModoImersivo.aplicar(atividade);
+    }
+
+    @Override
+    public void aoClicarNotificacoes() {
+        // Aqui você pode abrir uma nova tela ou mostrar um Dialogo
+        toast("Notificações: Em breve!");
+    }
+
+    @Override
+    public void aoClicarVerificarAtualizacoes() {
+        // Aqui no futuro você coloca a lógica para checar a API do GitHub
+        toast("Verificando atualizações...");
+    }
+
+    @Override
+    public void aoClicarInformacoes() {
+        // Reutiliza a sua janela de "Sobre"
+        mostrarDialogoSobre();
+    }
+
+    // ==========================================================
     //  Utilitários
     // ==========================================================
 
     private void mostrarDialogoSobre() {
+        // ATUALIZADO COM O NOVO NOME
         ui.dialogos.DialogoApp.confirmar(atividade,
-                "AML IDE",
+                "Nativara IDE",
                 "Versão: 1.00\n\n" +
-                "IDE mobile para criação de mods AML\n" +
-                "(AndroidModLoader) para GTA San Andreas.\n\n" +
+                "IDE mobile para desenvolvimento C/C++ nativo no Android.\n\n" +
                 "Compilador Clang 14 • NDK r24\n" +
                 "Suporte multi-ABI (ARM64 + ARM32)\n\n" +
                 "Desenvolvido por MaikoTS",

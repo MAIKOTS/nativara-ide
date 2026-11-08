@@ -28,6 +28,11 @@ public class ControladorPaineis {
         void aoClicarSobre();
         void aoClicarGithub();
         void aoClicarReportar();
+        
+        // ★ NOVOS MÉTODOS DO MENU DE CONFIGURAÇÕES
+        void aoClicarNotificacoes();
+        void aoClicarVerificarAtualizacoes();
+        void aoClicarInformacoes();
     }
 
     private final Activity atividade;
@@ -60,45 +65,21 @@ public class ControladorPaineis {
                     public void aoFechar() {
                         painelConfig.fecharMenu();
                     }
-
+                    
+                    // Repassando as novas ações para o ControladorApp
                     @Override
-                    public void aoAlterarTamanhoFonte(int n) {
-                        host.aoAlterarTamanhoFonte(n);
+                    public void aoClicarNotificacoes() {
+                        host.aoClicarNotificacoes();
                     }
 
                     @Override
-                    public void aoAlternarWordWrap(boolean a) {
-                        host.aoAlternarWordWrap(a);
+                    public void aoClicarVerificarAtualizacoes() {
+                        host.aoClicarVerificarAtualizacoes();
                     }
 
                     @Override
-                    public void aoAlternarNumerosLinha(boolean a) {
-                        host.aoAlternarNumerosLinha(a);
-                    }
-
-                    @Override
-                    public void aoAlternarConsoleAuto(boolean a) {
-                        host.aoAlternarConsoleAuto(a);
-                    }
-
-                    @Override
-                    public void aoAlternarSalvarAoSair(boolean a) {
-                        host.aoAlternarSalvarAoSair(a);
-                    }
-
-                    @Override
-                    public void aoClicarSobre() {
-                        host.aoClicarSobre();
-                    }
-
-                    @Override
-                    public void aoClicarGithub() {
-                        host.aoClicarGithub();
-                    }
-
-                    @Override
-                    public void aoClicarReportar() {
-                        host.aoClicarReportar();
+                    public void aoClicarInformacoes() {
+                        host.aoClicarInformacoes();
                     }
                 });
 

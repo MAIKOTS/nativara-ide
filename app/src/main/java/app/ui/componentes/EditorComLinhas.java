@@ -7,6 +7,8 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.widget.EditText;
 
+import ui.util.Cores;
+
 /**
  * EditText com configuração para código-fonte.
  * NÃO desenha numeração — isso é trabalho do GutterView.
@@ -34,7 +36,7 @@ public class EditorComLinhas extends EditText {
         setIncludeFontPadding(false);
         setLineSpacing(0f, 1.0f);
         setBackgroundColor(Color.TRANSPARENT);
-        setTextColor(0xFFE4E4E7);
+        setTextColor(Cores.TEXTO);
         setHorizontallyScrolling(false);
         setVerticalScrollBarEnabled(false);
         setHorizontalScrollBarEnabled(false);
@@ -44,10 +46,6 @@ public class EditorComLinhas extends EditText {
         setPadding(pad, padV, pad, padV);
     }
 
-    /**
-     * Mede o EditText com altura IRRESTRITA — assim ele sempre tem
-     * o Layout completo, com TODAS as linhas do texto.
-     */
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
         int heightUnspecified = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);

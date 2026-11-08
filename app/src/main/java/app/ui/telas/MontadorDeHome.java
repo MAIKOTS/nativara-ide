@@ -3,7 +3,6 @@ package ui.telas;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
@@ -23,6 +22,7 @@ import java.util.List;
 import java.util.Locale;
 
 import app.R;
+import modelo.Caminhos;
 import modelo.GerenciadorProjetoProperties;
 import modelo.Projeto;
 
@@ -37,13 +37,8 @@ public class MontadorDeHome {
         void aoCliqueProjetoRecente(File pasta);
     }
 
-    /** Quantos projetos mostrar no carrossel. */
     private static final int LIMITE_RECENTES = 10;
-
-    /** Largura de cada card no carrossel (dp). */
     private static final int LARGURA_CARD_DP = 150;
-
-    /** Debounce pra evitar re-scan em rajada. */
     private static final long INTERVALO_MINIMO_MS = 3000L;
 
     private final Context contexto;
@@ -109,7 +104,6 @@ public class MontadorDeHome {
         return layout;
     }
 
-    /** Recarrega a lista de recentes (com debounce). */
     public void atualizarRecentes() {
         if (containerRecentes == null) return;
 
@@ -123,20 +117,12 @@ public class MontadorDeHome {
         handlerUI.postDelayed(scanAgendado, 150);
     }
 
-    // ==========================================================
-    //  Dados prontos pra render
-    // ==========================================================
-
     private static class ItemRecente {
         File   pasta;
-        String descricao;   // "v1.0.0 · 3 fontes"
-        String tempo;       // "agora", "2h"
-        int    totalAbis;   // pra mostrar "2 ABIs" se quiser
+        String descricao;
+        String tempo;
+        int    totalAbis;
     }
-
-    // ==========================================================
-    //  Scan + render
-    // ==========================================================
 
     private void carregarProjetosRecentes() {
         if (containerRecentes == null || vazioRecentes == null) return;
@@ -145,12 +131,10 @@ public class MontadorDeHome {
 
         new Thread(() -> {
 
-            File pastaProjetos = new File(
-                    Environment.getExternalStorageDirectory(),
-                    "AML_IDE/Projetos");
+            File pastaProjetos = Caminhos.projetos();
 
             if (!pastaProjetos.isDirectory()) {
-                handlerUI.post(() -> mostrarVazio());
+                handlerUI.post(this::mostrarVazio);
                 return;
             }
 
@@ -165,7 +149,7 @@ public class MontadorDeHome {
             }
 
             if (projetos.isEmpty()) {
-                handlerUI.post(() -> mostrarVazio());
+                handlerUI.post(this::mostrarVazio);
                 return;
             }
 
@@ -213,94 +197,30 @@ public class MontadorDeHome {
         vazioRecentes.setVisibility(View.VISIBLE);
     }
 
-    // ==========================================================
-    //  Card do carrossel (mesmo estilo dos cards "Abrir"/"Clonar")
-    // ==========================================================
-
     private View criarCardProjetoRecente(ItemRecente item, boolean ehUltimo) {
-        LinearLayout card = new LinearLayout(contexto);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setBackgroundResource(R.drawable.bg_card);
-        card.setClickable(true);
-        card.setFocusable(true);
-        card.setPadding(dp(14), dp(14), dp(14), dp(14));
+    View card = LayoutInflater.from(contexto)
+            .inflate(R.layout.item_projeto_recente, containerRecentes, false);
 
-        // Largura fixa no carrossel + margem entre cards
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                dp(LARGURA_CARD_DP),
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.rightMargin = ehUltimo ? 0 : dp(10);
-        card.setLayoutParams(lp);
+    // Espaçamento entre os cards
+    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) card.getLayoutParams();
+    lp.rightMargin = ehUltimo ? 0 : dp(10);
+    card.setLayoutParams(lp);
 
-        // ---------- Círculo com ícone ----------
-        LinearLayout circulo = new LinearLayout(contexto);
-        LinearLayout.LayoutParams lpCirculo =
-                new LinearLayout.LayoutParams(dp(44), dp(44));
-        circulo.setLayoutParams(lpCirculo);
-        circulo.setGravity(Gravity.CENTER);
-        circulo.setBackgroundResource(R.drawable.bg_icon_circle);
+    // Bind das informações
+    TextView nome = card.findViewById(R.id.itemRecenteNome);
+    TextView detalhe = card.findViewById(R.id.itemRecenteDetalhe);
+    TextView tempo = card.findViewById(R.id.itemRecenteTempo);
 
-        ImageView icone = new ImageView(contexto);
-        icone.setLayoutParams(new LinearLayout.LayoutParams(dp(22), dp(22)));
-        icone.setImageResource(R.drawable.ic_pasta);
-        icone.setColorFilter(Color.parseColor("#00E676"));
-        circulo.addView(icone);
-        card.addView(circulo);
+    nome.setText(item.pasta.getName());
+    detalhe.setText(item.descricao);
+    tempo.setText(item.tempo);
 
-        // ---------- Nome do projeto ----------
-        TextView nome = new TextView(contexto);
-        nome.setText(item.pasta.getName());
-        nome.setTextColor(Color.parseColor("#F4F4F5"));
-        nome.setTextSize(14);
-        nome.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        nome.setMaxLines(1);
-        nome.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        LinearLayout.LayoutParams lpNome = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        lpNome.topMargin = dp(14);
-        nome.setLayoutParams(lpNome);
-        card.addView(nome);
+    card.setOnClickListener(v -> {
+        if (acoes != null) acoes.aoCliqueProjetoRecente(item.pasta);
+    });
 
-        // ---------- Descrição (v1.0.0 · 3 fontes) ----------
-        TextView detalhe = new TextView(contexto);
-        detalhe.setText(item.descricao);
-        detalhe.setTextColor(Color.parseColor("#A1A1AA"));
-        detalhe.setTextSize(11);
-        detalhe.setMaxLines(2);
-        detalhe.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        detalhe.setLineSpacing(dp(1), 1f);
-        LinearLayout.LayoutParams lpDet = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        lpDet.topMargin = dp(4);
-        detalhe.setLayoutParams(lpDet);
-        card.addView(detalhe);
-
-        // ---------- Tempo atrás ----------
-        TextView tempo = new TextView(contexto);
-        tempo.setText(item.tempo);
-        tempo.setTextColor(Color.parseColor("#6B7280"));
-        tempo.setTextSize(10);
-        tempo.setTypeface(Typeface.MONOSPACE);
-        LinearLayout.LayoutParams lpTempo = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        lpTempo.topMargin = dp(8);
-        tempo.setLayoutParams(lpTempo);
-        card.addView(tempo);
-
-        // ---------- Clique ----------
-        card.setOnClickListener(v -> {
-            if (acoes != null) acoes.aoCliqueProjetoRecente(item.pasta);
-        });
-
-        return card;
-    }
-
-    // ==========================================================
-    //  Helpers (I/O)
-    // ==========================================================
+    return card;
+}
 
     private long obterUltimaModificacao(File pasta) {
         long max = pasta.lastModified();
@@ -362,7 +282,7 @@ public class MontadorDeHome {
     }
 
     private int contarFontes(File pasta) {
-        File src = new File(pasta, "src");
+        File src = new File(pasta, Caminhos.SRC);
         if (!src.isDirectory()) return 0;
 
         File[] filhos = src.listFiles();

@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import app.R;
+import modelo.Caminhos;
 import modelo.GerenciadorProjetoProperties;
 import modelo.Projeto;
 import app.util.GerenciadorDeArquivos;
@@ -30,12 +30,7 @@ import app.util.GerenciadorDeArquivos;
 /**
  * Tela de gerenciamento de projetos.
  *
- * Fica fixa em /storage/emulated/0/AML_IDE/Projetos/
- *
- * Operações:
- *  - Criar novo projeto (com Projeto.properties e main.cpp inicial)
- *  - Abrir projeto (click simples)
- *  - Renomear, copiar, recortar, colar, deletar (menu 3 pontinhos)
+ * Fica em /sdcard/AML-IDE/Projetos/ (via Caminhos.projetos()).
  */
 public class TelaGerenciadorProjetos {
 
@@ -44,9 +39,6 @@ public class TelaGerenciadorProjetos {
         void aoAbrirProjeto(File pasta);
     }
 
-    // ==========================================================
-    //  Clipboard ESTÁTICO (persiste entre aberturas da tela)
-    // ==========================================================
     private static File clipboardArquivo = null;
     private static boolean clipboardEhRecorte = false;
 
@@ -63,19 +55,8 @@ public class TelaGerenciadorProjetos {
     public TelaGerenciadorProjetos(Context ctx, Acoes acoes) {
         this.ctx = ctx;
         this.acoes = acoes;
-        this.pastaProjetos = new File(
-                Environment.getExternalStorageDirectory(),
-                "AML_IDE/Projetos");
-
-        // Garante que a pasta existe
-        if (!pastaProjetos.exists()) {
-            pastaProjetos.mkdirs();
-        }
+        this.pastaProjetos = Caminhos.projetos();
     }
-
-    // ==========================================================
-    //  Construção
-    // ==========================================================
 
     public View construir() {
         View raiz = LayoutInflater.from(ctx)
@@ -87,21 +68,16 @@ public class TelaGerenciadorProjetos {
         clipboardTexto  = raiz.findViewById(R.id.projClipboardTexto);
         caminhoTexto    = raiz.findViewById(R.id.projCaminho);
 
-        caminhoTexto.setText(pastaProjetos.getAbsolutePath());
+        caminhoTexto.setText(Caminhos.exibir(pastaProjetos));
 
-        // Voltar
         raiz.findViewById(R.id.projBtnVoltar).setOnClickListener(v -> {
             if (acoes != null) acoes.aoVoltar();
         });
 
-        // Novo projeto
         raiz.findViewById(R.id.projBtnNovo).setOnClickListener(v -> dialogoNovoProjeto());
         raiz.findViewById(R.id.projBtnCriarPrimeiro).setOnClickListener(v -> dialogoNovoProjeto());
-
-        // Colar
         raiz.findViewById(R.id.projBtnColar).setOnClickListener(v -> colarClipboard());
 
-        // Cancelar clipboard
         raiz.findViewById(R.id.projBtnCancelarClipboard).setOnClickListener(v -> {
             clipboardArquivo = null;
             clipboardEhRecorte = false;
@@ -113,17 +89,12 @@ public class TelaGerenciadorProjetos {
         return raiz;
     }
 
-    // ==========================================================
-    //  Lista de projetos
-    // ==========================================================
-
     private void recarregarLista() {
         lista.removeAllViews();
 
         File[] projetos = pastaProjetos.listFiles();
         if (projetos == null) projetos = new File[0];
 
-        // Filtra só pastas e ignora ocultos
         List<File> validos = new ArrayList<>();
         for (File f : projetos) {
             if (f.isDirectory() && !f.getName().startsWith(".")) {
@@ -131,10 +102,8 @@ public class TelaGerenciadorProjetos {
             }
         }
 
-        // Ordena alfabético
         validos.sort((a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
-        // Empty state
         if (validos.isEmpty()) {
             lista.setVisibility(View.GONE);
             emptyState.setVisibility(View.VISIBLE);
@@ -160,71 +129,58 @@ public class TelaGerenciadorProjetos {
         nome.setText(projeto.getName());
         detalhe.setText(descreverProjeto(projeto));
 
-        // Click simples → abrir projeto
         item.setOnClickListener(v -> {
             if (acoes != null) acoes.aoAbrirProjeto(projeto);
         });
 
-        // Long press → menu também
         item.setOnLongClickListener(v -> {
             menuContexto(projeto);
             return true;
         });
 
-        // Click no ⋮ → menu
         menu.setOnClickListener(v -> menuContexto(projeto));
 
         return item;
     }
 
-    /**
-     * Descreve o projeto lendo o Projeto.properties se existir.
-     *
-     * Formato:
-     *   "v1.0.0 • arm64-v8a • libmeumod • 3 fontes"
-     * ou
-     *   "3 fontes" (sem properties)
-     * ou
-     *   "vazio"
-     */
     private String descreverProjeto(File pasta) {
-    StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
 
-    File propFile = new File(pasta, GerenciadorProjetoProperties.NOME_ARQUIVO);
-    if (propFile.isFile()) {
-        try {
-            Projeto p = GerenciadorProjetoProperties.carregar(pasta);
-            if (p.versao != null && !p.versao.isEmpty()) {
-                sb.append("v").append(p.versao);
-            }
-            if (p.abis != null && !p.abis.isEmpty()) {
-                if (sb.length() > 0) sb.append(" • ");
-                sb.append(String.join(",", p.abis));   // <- aqui
-            }
-            if (p.libNome != null && !p.libNome.isEmpty()) {
-                if (sb.length() > 0) sb.append(" • ");
-                sb.append(p.libNome);
-            }
-            if (p.dependencias != null && !p.dependencias.isEmpty()) {
-                if (sb.length() > 0) sb.append(" • ");
-                sb.append(p.dependencias.size()).append(" dep");
-                if (p.dependencias.size() != 1) sb.append("s");
-            }
-        } catch (Exception ignored) { }
+        File propFile = new File(pasta, GerenciadorProjetoProperties.NOME_ARQUIVO);
+        if (propFile.isFile()) {
+            try {
+                Projeto p = GerenciadorProjetoProperties.carregar(pasta);
+                if (p.versao != null && !p.versao.isEmpty()) {
+                    sb.append("v").append(p.versao);
+                }
+                if (p.abis != null && !p.abis.isEmpty()) {
+                    if (sb.length() > 0) sb.append(" • ");
+                    sb.append(String.join(",", p.abis));
+                }
+                if (p.libNome != null && !p.libNome.isEmpty()) {
+                    if (sb.length() > 0) sb.append(" • ");
+                    sb.append(p.libNome);
+                }
+                if (p.dependencias != null && !p.dependencias.isEmpty()) {
+                    if (sb.length() > 0) sb.append(" • ");
+                    sb.append(p.dependencias.size()).append(" dep");
+                    if (p.dependencias.size() != 1) sb.append("s");
+                }
+            } catch (Exception ignored) { }
+        }
+
+        int fontes = contarFontes(pasta);
+        if (fontes > 0) {
+            if (sb.length() > 0) sb.append(" • ");
+            sb.append(fontes).append(" fonte").append(fontes != 1 ? "s" : "");
+        }
+
+        if (sb.length() == 0) return "vazio";
+        return sb.toString();
     }
-
-    int fontes = contarFontes(pasta);
-    if (fontes > 0) {
-        if (sb.length() > 0) sb.append(" • ");
-        sb.append(fontes).append(" fonte").append(fontes != 1 ? "s" : "");
-    }
-
-    if (sb.length() == 0) return "vazio";
-    return sb.toString();
-}
 
     private int contarFontes(File pasta) {
-        File src = new File(pasta, "src");
+        File src = new File(pasta, Caminhos.SRC);
         if (!src.isDirectory()) return 0;
 
         File[] filhos = src.listFiles();
@@ -240,10 +196,6 @@ public class TelaGerenciadorProjetos {
         }
         return total;
     }
-
-    // ==========================================================
-    //  Menu de contexto
-    // ==========================================================
 
     private void menuContexto(File projeto) {
         String[] opcoes = {
@@ -269,10 +221,6 @@ public class TelaGerenciadorProjetos {
                 .show();
     }
 
-    // ==========================================================
-    //  Novo projeto
-    // ==========================================================
-
     private void dialogoNovoProjeto() {
         EditText campo = new EditText(ctx);
         campo.setHint("nome-do-projeto");
@@ -281,13 +229,12 @@ public class TelaGerenciadorProjetos {
 
         new AlertDialog.Builder(ctx)
                 .setTitle("Novo Projeto")
-                .setMessage("Criar em: " + pastaProjetos.getAbsolutePath())
+                .setMessage("Criar em: " + Caminhos.exibir(pastaProjetos))
                 .setView(campo)
                 .setPositiveButton("Criar", (d, w) -> {
                     String nome = campo.getText().toString().trim();
                     if (nome.isEmpty()) return;
 
-                    // Sanitiza o nome (evita caracteres problemáticos)
                     nome = sanitizarNome(nome);
                     if (nome.isEmpty()) {
                         Toast.makeText(ctx, "Nome inválido.",
@@ -295,7 +242,7 @@ public class TelaGerenciadorProjetos {
                         return;
                     }
 
-                    File novo = new File(pastaProjetos, nome);
+                    File novo = Caminhos.projeto(nome);
                     if (novo.exists()) {
                         Toast.makeText(ctx, "Já existe um projeto com esse nome.",
                                 Toast.LENGTH_SHORT).show();
@@ -315,74 +262,58 @@ public class TelaGerenciadorProjetos {
                 .show();
     }
 
-    /**
-     * Cria a estrutura completa do projeto:
-     *
-     *   Projeto/
-     *   ├── Projeto.properties
-     *   ├── src/
-     *   │   └── main.cpp
-     *   ├── include/
-     *   └── lib/
-     *       └── arm64-v8a/      ← onde os .so vão ficar
-     */
     private boolean criarEstruturaProjeto(File pastaProjeto, String nome) {
-    if (!pastaProjeto.mkdirs()) return false;
+        if (!pastaProjeto.mkdirs()) return false;
 
-    File pastaSrc     = new File(pastaProjeto, "src");
-    File pastaInclude = new File(pastaProjeto, "include");
-    File pastaDeps    = new File(pastaProjeto, "deps");
-    File pastaLib     = new File(pastaProjeto, "lib");
+        File pastaSrc     = new File(pastaProjeto, Caminhos.SRC);
+        File pastaInclude = new File(pastaProjeto, Caminhos.INCLUDE);
+        File pastaDeps    = new File(pastaProjeto, Caminhos.DEPS);
+        File pastaLib     = new File(pastaProjeto, Caminhos.LIB);
 
-    pastaSrc.mkdirs();
-    pastaInclude.mkdirs();
-    pastaDeps.mkdirs();
-    pastaLib.mkdirs();
+        pastaSrc.mkdirs();
+        pastaInclude.mkdirs();
+        pastaDeps.mkdirs();
+        pastaLib.mkdirs();
 
-    GerenciadorProjetoProperties.criarPadrao(pastaProjeto, nome);
+        GerenciadorProjetoProperties.criarPadrao(pastaProjeto, nome);
 
-    Projeto p = GerenciadorProjetoProperties.carregar(pastaProjeto);
-    if (p.abis == null || p.abis.isEmpty()) {
-        p.abis = new ArrayList<>();
-        p.abis.add("arm64-v8a");
-        p.abis.add("armeabi-v7a");
+        Projeto p = GerenciadorProjetoProperties.carregar(pastaProjeto);
+        if (p.abis == null || p.abis.isEmpty()) {
+            p.abis = new ArrayList<>();
+            p.abis.add("arm64-v8a");
+            p.abis.add("armeabi-v7a");
+        }
+
+        for (String abi : p.abis) {
+            String abiPasta = Projeto.normalizarAbi(abi);
+            new File(pastaLib, abiPasta).mkdirs();
+        }
+
+        File mainCpp = new File(pastaSrc, "main.cpp");
+        String codigo =
+                "// " + nome + "\n" +
+                "// Mod AML para GTA San Andreas Android\n" +
+                "// Gerado automaticamente pela AML IDE\n\n" +
+                "#include <cstdio>\n" +
+                "#include <jni.h>\n\n" +
+                "extern \"C\" {\n" +
+                "    __attribute__((visibility(\"default\")))\n" +
+                "    void AMLMain() {\n" +
+                "        printf(\"Mod " + nome + " carregado!\\n\");\n" +
+                "    }\n" +
+                "}\n";
+
+        GerenciadorDeArquivos.salvarArquivo(mainCpp, codigo);
+
+        return true;
     }
-
-    // Cria subpasta para CADA ABI
-    for (String abi : p.abis) {
-        String abiPasta = Projeto.normalizarAbi(abi);   // <- aqui
-        new File(pastaLib, abiPasta).mkdirs();
-    }
-
-    File mainCpp = new File(pastaSrc, "main.cpp");
-    String codigo =
-            "// " + nome + "\n" +
-            "// Mod AML para GTA San Andreas Android\n" +
-            "// Gerado automaticamente pela AML IDE\n\n" +
-            "#include <cstdio>\n" +
-            "#include <jni.h>\n\n" +
-            "extern \"C\" {\n" +
-            "    __attribute__((visibility(\"default\")))\n" +
-            "    void AMLMain() {\n" +
-            "        printf(\"Mod " + nome + " carregado!\\n\");\n" +
-            "    }\n" +
-            "}\n";
-
-    GerenciadorDeArquivos.salvarArquivo(mainCpp, codigo);
-
-    return true;
-}
 
     private String sanitizarNome(String nome) {
         if (nome == null) return "";
         return nome.trim()
-                .replaceAll("[\\\\/:*?\"<>|]", "")   // remove inválidos
-                .replaceAll("\\s+", "_");            // espaços → _
+                .replaceAll("[\\\\/:*?\"<>|]", "")
+                .replaceAll("\\s+", "_");
     }
-
-    // ==========================================================
-    //  Renomear
-    // ==========================================================
 
     private void dialogoRenomear(File projeto) {
         EditText campo = new EditText(ctx);
@@ -419,14 +350,6 @@ public class TelaGerenciadorProjetos {
                 .show();
     }
 
-    // ==========================================================
-    //  Dependências
-    // ==========================================================
-
-    /**
-     * Baixa as dependências do projeto via Git.
-     * Lê a lista de `Projeto.properties`.
-     */
     private void baixarDependencias(File pastaProjeto) {
         Projeto p = GerenciadorProjetoProperties.carregar(pastaProjeto);
 
@@ -445,7 +368,6 @@ public class TelaGerenciadorProjetos {
         modelo.GerenciadorDependencias.baixar(p, null, new modelo.GerenciadorDependencias.Callback() {
             @Override
             public void aoProgresso(int indice, int total, String nome) {
-                // (opcional) mostrar progresso
             }
 
             @Override
@@ -462,10 +384,6 @@ public class TelaGerenciadorProjetos {
             }
         });
     }
-
-    // ==========================================================
-    //  Deletar
-    // ==========================================================
 
     private void confirmarDeletar(File projeto) {
         new AlertDialog.Builder(ctx)
@@ -493,10 +411,6 @@ public class TelaGerenciadorProjetos {
         }
         return f.delete();
     }
-
-    // ==========================================================
-    //  Clipboard
-    // ==========================================================
 
     private void copiarParaClipboard(File projeto, boolean recortar) {
         clipboardArquivo = projeto;
@@ -581,10 +495,6 @@ public class TelaGerenciadorProjetos {
             return false;
         }
     }
-
-    // ==========================================================
-    //  Utils
-    // ==========================================================
 
     private int dp(int v) {
         return (int) (v * ctx.getResources().getDisplayMetrics().density);

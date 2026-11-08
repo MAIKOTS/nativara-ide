@@ -85,6 +85,18 @@ public final class GerenciadorNDK {
     //  Localização das libs nativas do APK
     // ==========================================================
 
+    /** Retorna o caminho do libconsole_runner.so. */
+    public static File obterConsoleRunner(Context ctx) {
+        String dir = ctx.getApplicationInfo().nativeLibraryDir;
+        return new File(dir, "libconsole_runner.so");
+    }
+
+    /** O runner de console está disponível? */
+    public static boolean temConsoleRunner(Context ctx) {
+        File r = obterConsoleRunner(ctx);
+        return r.isFile() && r.canExecute();
+    }
+    
     public static File obterRunner(Context ctx) {
         String dir = ctx.getApplicationInfo().nativeLibraryDir;
         return new File(dir, "librunner.so");

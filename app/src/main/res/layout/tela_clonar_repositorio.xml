@@ -5,15 +5,15 @@
     android:background="@color/bg_base"
     android:orientation="vertical">
 
-    <!-- Toolbar -->
+    <!-- ═══════════════════ TOOLBAR ═══════════════════ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/bg_superficie"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
+        android:paddingStart="4dp"
+        android:paddingEnd="16dp"
         android:paddingTop="10dp"
         android:paddingBottom="10dp">
 
@@ -24,24 +24,31 @@
             android:background="?android:attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
-            android:padding="10dp"
-            android:text="← Voltar"
+            android:padding="12dp"
+            android:text="←"
             android:textColor="@color/texto_primario"
-            android:textSize="14sp" />
+            android:textSize="20sp" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
             android:layout_weight="1"
-            android:gravity="center"
+            android:letterSpacing="0.02"
             android:text="Clonar Repositório"
-            android:textColor="@color/verde_destaque"
-            android:textSize="15sp"
+            android:textColor="@color/texto_primario"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
-        <View
-            android:layout_width="80dp"
-            android:layout_height="1dp" />
+        <TextView
+            android:id="@+id/txtStatusTopo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PRONTO"
+            android:textColor="@color/texto_terciario"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1" />
     </LinearLayout>
 
     <View
@@ -49,21 +56,35 @@
         android:layout_height="1dp"
         android:background="@color/borda_sutil" />
 
+    <!-- ═══════════════════ CONTEÚDO ═══════════════════ -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="16dp">
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="16dp">
 
+            <!-- ─── CARD: Informações do repositório ─── -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="URL do Repositório"
+                android:letterSpacing="0.05"
+                android:text="REPOSITÓRIO"
+                android:textColor="@color/verde_destaque"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <!-- URL -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="URL *"
                 android:textColor="@color/texto_secundario"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -76,13 +97,14 @@
                 android:background="@drawable/bg_editor_area"
                 android:hint="https://github.com/usuario/repo.git"
                 android:inputType="textUri"
-                android:padding="12dp"
+                android:padding="14dp"
                 android:singleLine="true"
                 android:textColor="@color/texto_primario"
                 android:textColorHint="@color/texto_terciario"
                 android:textSize="13sp"
                 android:typeface="monospace" />
 
+            <!-- Branch -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -100,21 +122,30 @@
                 android:background="@drawable/bg_editor_area"
                 android:hint="main"
                 android:inputType="text"
-                android:padding="12dp"
+                android:padding="14dp"
                 android:singleLine="true"
                 android:textColor="@color/texto_primario"
                 android:textColorHint="@color/texto_terciario"
                 android:textSize="13sp"
                 android:typeface="monospace" />
 
+            <!-- Token -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Token de Acesso (para repositórios privados)"
+                android:text="Token de acesso"
                 android:textColor="@color/texto_secundario"
                 android:textSize="12sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Apenas para repositórios privados"
+                android:textColor="@color/texto_terciario"
+                android:textSize="11sp" />
 
             <EditText
                 android:id="@+id/inputToken"
@@ -124,54 +155,136 @@
                 android:background="@drawable/bg_editor_area"
                 android:hint="ghp_xxxxxxxxxxxxxxxxxxxx"
                 android:inputType="textPassword"
-                android:padding="12dp"
+                android:padding="14dp"
                 android:singleLine="true"
                 android:textColor="@color/texto_primario"
                 android:textColorHint="@color/texto_terciario"
                 android:textSize="13sp"
                 android:typeface="monospace" />
 
-            <TextView
-                android:id="@+id/btnIniciarClone"
+            <!-- ═══ ÁREA DE AÇÃO ═══ -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:background="@drawable/bg_botao_confirmar"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:padding="14dp"
-                android:text="📥  Clonar Repositório"
-                android:textColor="#09090B"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:orientation="horizontal">
 
-            <!-- Console de status -->
-            <TextView
-                android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/btnIniciarClone"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_botao_confirmar"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:padding="14dp"
+                    android:text="📥  Iniciar clone"
+                    android:textColor="#09090B"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btnCancelarClone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="14dp"
+                    android:text="Cancelar"
+                    android:textColor="@color/texto_secundario"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- ─── ProgressBar (invisível por padrão) ─── -->
+            <ProgressBar
+                android:id="@+id/progressClone"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Status"
-                android:textColor="@color/texto_secundario"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="16dp"
+                android:indeterminate="true"
+                android:visibility="gone" />
+
+            <!-- ═══ CONSOLE ═══ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="0.05"
+                    android:text="SAÍDA"
+                    android:textColor="@color/verde_destaque"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:background="@color/borda_sutil" />
+
+                <TextView
+                    android:id="@+id/btnLimparConsole"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="4dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="6dp"
+                    android:text="Limpar"
+                    android:textColor="@color/texto_terciario"
+                    android:textSize="11sp" />
+            </LinearLayout>
 
             <ScrollView
+                android:id="@+id/scrollConsole"
                 android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:layout_marginTop="6dp"
-                android:background="@drawable/bg_editor_console">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_editor_console"
+                android:minHeight="180dp">
 
                 <TextView
                     android:id="@+id/consoleClone"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="12dp"
-                    android:text="Aguardando..."
+                    android:padding="14dp"
+                    android:fontFamily="monospace"
+                    android:lineSpacingExtra="3dp"
+                    android:text="Aguardando início do clone...\n"
                     android:textColor="#00E676"
-                    android:textSize="11sp"
-                    android:typeface="monospace" />
+                    android:textIsSelectable="true"
+                    android:textSize="11sp" />
             </ScrollView>
+
+            <!-- Rodapé com dica -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="16dp"
+                android:lineSpacingExtra="2dp"
+                android:text="💡 O clone é feito em modo raso (só o último commit) para ser mais rápido. Arquivos do Git LFS não são baixados automaticamente."
+                android:textColor="@color/texto_terciario"
+                android:textSize="11sp" />
+
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

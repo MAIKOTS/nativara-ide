@@ -21,6 +21,7 @@ import app.util.GerenciadorRecursos;
 import modelo.ManifestoRecursos;
 import modelo.RecursoRemoto;
 import ui.dialogos.DialogoApp;
+import modelo.Caminhos;
 
 /**
  * Tela que lista os recursos essenciais da IDE (sysroot, runtime, etc.)
@@ -366,15 +367,15 @@ public class TelaRecursos {
     // ==========================================================
 
     private void atualizarEspaco() {
-        long livre = gerenciador.obterEspacoLivre();
-        espacoLivreView.setText("Espaço livre: "
-                + GerenciadorRecursos.formatarTamanho(livre));
+    long livre = gerenciador.obterEspacoLivre();
+    espacoLivreView.setText("Espaço livre: "
+            + GerenciadorRecursos.formatarTamanho(livre));
 
-        long usado = tamanhoRecursivo(new File(ctx.getFilesDir(), "sysroot"))
-                   + tamanhoRecursivo(new File(ctx.getFilesDir(), "lib"));
-        espacoUsadoView.setText("Recursos instalados: "
-                + GerenciadorRecursos.formatarTamanho(usado));
-    }
+    long usado = tamanhoRecursivo(Caminhos.sysroot(ctx))
+               + tamanhoRecursivo(Caminhos.libsExtras(ctx));
+    espacoUsadoView.setText("Recursos instalados: "
+            + GerenciadorRecursos.formatarTamanho(usado));
+}
 
     private long tamanhoRecursivo(File f) {
         if (f == null || !f.exists()) return 0;

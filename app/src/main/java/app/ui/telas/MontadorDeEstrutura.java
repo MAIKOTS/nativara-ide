@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import ui.dialogos.DialogoApp;
-import ui.dialogos.ItemAcao;    // ← ADICIONAR
+import ui.dialogos.ItemAcao;
 import app.R;
 
 public class MontadorDeEstrutura {

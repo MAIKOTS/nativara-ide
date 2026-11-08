@@ -1,7 +1,6 @@
 package ui.componentes;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -11,18 +10,10 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import ui.util.Cores;
+
 /**
  * Espelho do PainelLateralDeslizante, mas abre pela DIREITA.
- *
- * Uso:
- *   new PainelLateralDireita(ctx, conteudo, menuLateral);
- *
- * - Swipe da borda direita pra ESQUERDA abre
- * - Swipe pra DIREITA fecha
- * - Botão "fechar" interno também fecha
- *
- * ★ Pode ser habilitado/desabilitado em runtime via setHabilitado().
- *   Quando desabilitado, bloqueia gestos e fecha automaticamente.
  */
 public class PainelLateralDireita extends FrameLayout {
 
@@ -35,7 +26,6 @@ public class PainelLateralDireita extends FrameLayout {
     private final int larguraMenu;
     private final float margemBordaPx;
 
-    /** Largura do menu: 50% da tela. */
     private static final float FRACAO_LARGURA = 0.50f;
 
     public PainelLateralDireita(Context contexto,
@@ -60,7 +50,7 @@ public class PainelLateralDireita extends FrameLayout {
 
         // 2. Sombra / overlay
         sombraFundo = new View(contexto);
-        sombraFundo.setBackgroundColor(Color.parseColor("#99000000"));
+        sombraFundo.setBackgroundColor(Cores.OVERLAY);
         sombraFundo.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
@@ -75,7 +65,7 @@ public class PainelLateralDireita extends FrameLayout {
 
         // 3. Estilo do menu
         GradientDrawable fundo = new GradientDrawable();
-        fundo.setColor(Color.parseColor("#18181B"));
+        fundo.setColor(Cores.FUNDO_MENU);
 
         float raio = TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, 4,
@@ -91,7 +81,7 @@ public class PainelLateralDireita extends FrameLayout {
         int bordaPx = (int) TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, 1,
                 contexto.getResources().getDisplayMetrics());
-        fundo.setStroke(bordaPx, Color.parseColor("#27272A"));
+        fundo.setStroke(bordaPx, Cores.BORDA);
         menuLateral.setBackground(fundo);
 
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
@@ -107,14 +97,6 @@ public class PainelLateralDireita extends FrameLayout {
         addView(menuLateral);
     }
 
-    // ==========================================================
-    //  Habilitação (só funciona onde o ControladorApp permitir)
-    // ==========================================================
-
-    /**
-     * Habilita/desabilita o painel.
-     * Quando desabilitado, bloqueia gestos e fecha o menu se aberto.
-     */
     public void setHabilitado(boolean h) {
         this.habilitado = h;
         if (!h && menuAberto) {
@@ -125,10 +107,6 @@ public class PainelLateralDireita extends FrameLayout {
     public boolean isHabilitado() {
         return habilitado;
     }
-
-    // ==========================================================
-    //  Toques / gestos
-    // ==========================================================
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
@@ -210,10 +188,6 @@ public class PainelLateralDireita extends FrameLayout {
         }
         return super.onTouchEvent(evento);
     }
-
-    // ==========================================================
-    //  API pública
-    // ==========================================================
 
     public void abrirMenu() {
         if (!habilitado) return;

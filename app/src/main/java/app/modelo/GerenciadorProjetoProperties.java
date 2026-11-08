@@ -52,6 +52,15 @@ public final class GerenciadorProjetoProperties {
         p.autor     = props.getProperty("autor", p.autor);
         p.descricao = props.getProperty("descricao", p.descricao);
 
+        // ---------- Tipo de build ----------
+        String tipoRaw = props.getProperty("tipo", "MOD").trim().toUpperCase();
+        try {
+            p.tipoBuild = Projeto.TipoBuild.valueOf(tipoRaw);
+        } catch (IllegalArgumentException e) {
+            Log.w(TAG, "Tipo inválido: " + tipoRaw + " — usando MOD");
+            p.tipoBuild = Projeto.TipoBuild.MOD;
+        }
+        
         // ---------- Alvo (multi-ABI) ----------
         String abiRaw = props.getProperty("abi", "");
         p.abis.clear();
@@ -136,6 +145,11 @@ public final class GerenciadorProjetoProperties {
         sb.append("versao=").append(p.versao).append("\n");
         sb.append("autor=").append(p.autor).append("\n");
         sb.append("descricao=").append(p.descricao).append("\n\n");
+        
+        sb.append("# ---------- Tipo de build ----------\n");
+        sb.append("# MOD     = módulo AML (shared library injetada no jogo)\n");
+        sb.append("# CONSOLE = programa executável (rodado pelo console runner)\n");
+        sb.append("tipo=").append(p.tipoBuild.name()).append("\n\n");
 
         sb.append("# ---------- Alvo ----------\n");
         sb.append("# abi: arm64-v8a, armeabi-v7a (separadas por vírgula)\n");

@@ -1,7 +1,6 @@
 package ui.telas;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Handler;
@@ -12,10 +11,8 @@ import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,18 +26,18 @@ import ui.componentes.GutterView;
 import ui.componentes.ScrollView2D;
 import ui.editor.sintaxe.FabricaDeSintaxe;
 import ui.editor.sintaxe.SintaxeJson;
+import ui.util.Cores;
 import app.util.CompiladorNativo;
 import app.util.GerenciadorDeArquivos;
 import modelo.Projeto;
 import modelo.GerenciadorProjetoProperties;
 import ui.util.GerenciadorLogsConsole;
+import modelo.Caminhos;
 
 public class MontadorDeEditorComAbas {
 
     public interface AcoesEditor {
         void aoFecharEditor();
-
-        /** ★ Usuário pediu pra abrir as configs do projeto. */
         default void aoAbrirConfigs(java.io.File pastaProjeto) { }
     }
 
@@ -49,27 +46,23 @@ public class MontadorDeEditorComAbas {
     private final List<AbaArquivo> abasAbertas;
     private AbaArquivo abaAtiva;
 
-    // Views do XML
     private LinearLayout    conteinerAbas;
     private LinearLayout    conteinerSimbolos;
     private EditText        campoEditorCodigo;
     private ScrollView2D    editorScroll2D;
-    private ConsoleTerminal consoleDeSaida;      // ← trocado de TextView
+    private ConsoleTerminal consoleDeSaida;
     private TextView        textStatusAba;
+    private TextView        btnCompilar;
     private GutterView      editorGutter;
 
-    // Console colapsável
     private LinearLayout consoleContainer;
     private TextView     consoleToggle;
-    private ScrollView   consoleScroll;
     private boolean      consoleExpandido = false;
     private int          alturaConsoleRecolhido;
     private int          alturaConsoleExpandido;
 
-    // Teclado
     private View raizEditor;
     private View scrollSimbolos;
-    private ViewTreeObserver.OnGlobalLayoutListener listenerTeclado;
     private boolean tecladoAbertoAnterior = false;
     private int     alturaTecladoAtual = 0;
 
@@ -91,10 +84,6 @@ public class MontadorDeEditorComAbas {
         FabricaDeSintaxe.inicializar(contexto);
     }
 
-    // ==========================================================
-    //  Construção
-    // ==========================================================
-
     public View construirLayout() {
         raizEditor = LayoutInflater.from(contexto)
                 .inflate(R.layout.tela_editor, null, false);
@@ -105,11 +94,11 @@ public class MontadorDeEditorComAbas {
         editorScroll2D    = raizEditor.findViewById(R.id.editorScroll2D);
         consoleDeSaida    = raizEditor.findViewById(R.id.editorConsole);
         textStatusAba     = raizEditor.findViewById(R.id.editorStatusAba);
+        btnCompilar       = raizEditor.findViewById(R.id.editorBtnCompilar);
         editorGutter      = raizEditor.findViewById(R.id.editorGutter);
 
         consoleContainer  = raizEditor.findViewById(R.id.editorConsoleContainer);
         consoleToggle     = raizEditor.findViewById(R.id.editorConsoleToggle);
-        consoleScroll     = raizEditor.findViewById(R.id.editorConsoleScroll);
 
         editorGutter.setEditor(campoEditorCodigo);
         editorGutter.setScrollView(editorScroll2D);
@@ -119,10 +108,13 @@ public class MontadorDeEditorComAbas {
             if (acoesEditor != null) acoesEditor.aoFecharEditor();
         });
         raizEditor.findViewById(R.id.editorBtnSalvar).setOnClickListener(v -> salvarArquivoAtual());
-        raizEditor.findViewById(R.id.editorBtnCompilar).setOnClickListener(v -> executarCompilacaoAtual());
-
-        // Botão de Configs do Projeto
+        btnCompilar.setOnClickListener(v -> executarCompilacaoAtual());
         raizEditor.findViewById(R.id.editorBtnConfigs).setOnClickListener(v -> abrirConfigProjeto());
+        
+        // NOVO: Botão de limpar console
+        raizEditor.findViewById(R.id.editorBtnLimparConsole).setOnClickListener(v -> {
+            if (consoleDeSaida != null) consoleDeSaida.limpar();
+        });
 
         configurarConsoleColapsavel();
         configurarMonitorDeTexto();
@@ -131,10 +123,6 @@ public class MontadorDeEditorComAbas {
 
         return raizEditor;
     }
-
-    // ==========================================================
-    //  Console colapsável
-    // ==========================================================
 
     private void configurarConsoleColapsavel() {
         if (consoleContainer == null) return;
@@ -151,10 +139,6 @@ public class MontadorDeEditorComAbas {
             header.setOnClickListener(v -> alternarConsole());
         }
     }
-
-    // ==========================================================
-    //  Configurações do projeto
-    // ==========================================================
 
     private void abrirConfigProjeto() {
         if (abaAtiva == null) {
@@ -196,59 +180,55 @@ public class MontadorDeEditorComAbas {
             consoleToggle.setText(expandido ? "▼" : "▲");
         }
 
-        if (expandido && consoleScroll != null) {
-            consoleScroll.post(() -> consoleScroll.fullScroll(View.FOCUS_DOWN));
+        if (expandido && consoleDeSaida != null) {
+            consoleDeSaida.postDelayed(() -> consoleDeSaida.fullScroll(View.FOCUS_DOWN), 100);
         }
     }
-
-    // ==========================================================
-    //  TECLADO
-    // ==========================================================
 
     private void configurarListenerTeclado() {
         if (raizEditor == null) return;
 
-        if (conteinerSimbolos != null
-                && conteinerSimbolos.getParent() instanceof View) {
+        if (conteinerSimbolos != null && conteinerSimbolos.getParent() instanceof View) {
             scrollSimbolos = (View) conteinerSimbolos.getParent();
         }
 
-        listenerTeclado = () -> {
-            if (raizEditor == null) return;
+        raizEditor.setOnApplyWindowInsetsListener((v, insets) -> {
+            int alturaTeclado = 0;
 
-            Rect areaVisivel = new Rect();
-            raizEditor.getWindowVisibleDisplayFrame(areaVisivel);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                alturaTeclado = insets.getInsets(android.view.WindowInsets.Type.ime()).bottom;
+            } else {
+                Rect areaVisivel = new Rect();
+                raizEditor.getWindowVisibleDisplayFrame(areaVisivel);
+                int alturaTela = raizEditor.getRootView().getHeight();
+                int diferenca = alturaTela - areaVisivel.bottom;
+                if (diferenca > alturaTela * 0.15f) alturaTeclado = diferenca;
+            }
 
-            int alturaTela    = raizEditor.getRootView().getHeight();
-            int alturaTeclado = alturaTela - areaVisivel.bottom;
+            boolean tecladoAberto = alturaTeclado > 0;
 
-            boolean tecladoAberto = alturaTeclado > alturaTela * 0.15f;
-            int alturaFinal = tecladoAberto ? Math.max(0, alturaTeclado) : 0;
-
-            if (tecladoAberto == tecladoAbertoAnterior
-                    && alturaFinal == alturaTecladoAtual) {
-                return;
+            if (tecladoAberto == tecladoAbertoAnterior && alturaTeclado == alturaTecladoAtual) {
+                return insets;
             }
 
             tecladoAbertoAnterior = tecladoAberto;
-            alturaTecladoAtual = alturaFinal;
+            alturaTecladoAtual = alturaTeclado;
 
             if (tecladoAberto) {
                 if (scrollSimbolos != null) scrollSimbolos.setVisibility(View.GONE);
                 if (consoleContainer != null) consoleContainer.setVisibility(View.GONE);
-
-                raizEditor.setPadding(0, 0, 0, alturaFinal);
+                
+                raizEditor.setPadding(0, 0, 0, alturaTeclado);
                 rolarCursorParaVisivel();
-
             } else {
                 if (scrollSimbolos != null) scrollSimbolos.setVisibility(View.VISIBLE);
                 if (consoleContainer != null) consoleContainer.setVisibility(View.VISIBLE);
+                
                 raizEditor.setPadding(0, 0, 0, 0);
             }
-        };
 
-        raizEditor.getViewTreeObserver()
-                .addOnGlobalLayoutListener(listenerTeclado);
+            return insets;
+        });
     }
 
     private void rolarCursorParaVisivel() {
@@ -280,18 +260,12 @@ public class MontadorDeEditorComAbas {
         }, 200);
     }
 
-    // ==========================================================
-    //  Símbolos rápidos
-    // ==========================================================
-
     private void popularSimbolos() {
         conteinerSimbolos.removeAllViews();
-
         LayoutInflater inflater = LayoutInflater.from(contexto);
 
         for (String simbolo : SIMBOLOS) {
-            TextView btn = (TextView) inflater.inflate(
-                    R.layout.item_simbolo, conteinerSimbolos, false);
+            TextView btn = (TextView) inflater.inflate(R.layout.item_simbolo, conteinerSimbolos, false);
             btn.setText(simbolo);
 
             btn.setOnClickListener(v -> {
@@ -307,33 +281,22 @@ public class MontadorDeEditorComAbas {
         }
     }
 
-    // ==========================================================
-    //  Abas
-    // ==========================================================
-
     private void atualizarVisualizacaoAbas() {
         conteinerAbas.removeAllViews();
-
         LayoutInflater inflater = LayoutInflater.from(contexto);
 
         for (AbaArquivo aba : abasAbertas) {
             boolean ehAtivo = aba.equals(abaAtiva);
-
             View itemAba = inflater.inflate(R.layout.item_aba, conteinerAbas, false);
 
-            itemAba.setBackgroundResource(ehAtivo
-                    ? R.drawable.bg_aba_editor_ativa
-                    : R.drawable.bg_aba_editor);
+            itemAba.setBackgroundResource(ehAtivo ? R.drawable.bg_aba_editor_ativa : R.drawable.bg_aba_editor);
 
             TextView titulo = itemAba.findViewById(R.id.abaTitulo);
             TextView fechar = itemAba.findViewById(R.id.abaBtnFechar);
 
             titulo.setText((aba.isModificado() ? "● " : "") + aba.getArquivo().getName());
-            titulo.setTextColor(ehAtivo
-                    ? Color.parseColor("#F4F4F5")
-                    : Color.parseColor("#888888"));
-            titulo.setTypeface(Typeface.MONOSPACE,
-                    ehAtivo ? Typeface.BOLD : Typeface.NORMAL);
+            titulo.setTextColor(ehAtivo ? Cores.TEXTO_PRIMARIO : Cores.TEXTO_SECUNDARIO);
+            titulo.setTypeface(Typeface.MONOSPACE, ehAtivo ? Typeface.BOLD : Typeface.NORMAL);
 
             itemAba.setOnClickListener(v -> selecionarAba(aba));
             fechar.setOnClickListener(v -> fecharAba(aba));
@@ -369,10 +332,6 @@ public class MontadorDeEditorComAbas {
         atualizarVisualizacaoAbas();
     }
 
-    // ==========================================================
-    //  Abrir / selecionar arquivo
-    // ==========================================================
-
     public void abrirArquivo(File arquivo) {
         if (arquivo == null || !arquivo.exists()) return;
 
@@ -401,12 +360,8 @@ public class MontadorDeEditorComAbas {
         ignorarTrocaTexto = false;
 
         campoEditorCodigo.post(() -> {
-            if (editorScroll2D != null) {
-                editorScroll2D.scrollTo(0, 0);
-            }
-            if (campoEditorCodigo != null) {
-                campoEditorCodigo.invalidate();
-            }
+            if (editorScroll2D != null) editorScroll2D.scrollTo(0, 0);
+            if (campoEditorCodigo != null) campoEditorCodigo.invalidate();
             if (editorGutter != null) {
                 editorGutter.requestLayout();
                 editorGutter.invalidate();
@@ -423,10 +378,6 @@ public class MontadorDeEditorComAbas {
         atualizarVisualizacaoAbas();
     }
 
-    // ==========================================================
-    //  Salvar / Compilar
-    // ==========================================================
-
     public void salvarArquivoAtual() {
         if (abaAtiva == null) return;
 
@@ -437,22 +388,15 @@ public class MontadorDeEditorComAbas {
             abaAtiva.setModificado(false);
             textStatusAba.setText(abaAtiva.getArquivo().getName());
             atualizarVisualizacaoAbas();
-            Toast.makeText(contexto, "Arquivo salvo com sucesso!",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(contexto, "Arquivo salvo com sucesso!", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(contexto, "Erro ao salvar o arquivo.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(contexto, "Erro ao salvar o arquivo.", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // ==========================================================
-    //  COMPILAÇÃO
-    // ==========================================================
-
     public void executarCompilacaoAtual() {
         if (abaAtiva == null) {
-            Toast.makeText(contexto, "Nenhum arquivo aberto para compilar.",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(contexto, "Nenhum arquivo aberto para compilar.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -470,37 +414,39 @@ public class MontadorDeEditorComAbas {
             projeto.abis.add("arm64-v8a");
         }
 
-        // ★ Limpa o console antes de começar
+        // 1. Desativa o botão para evitar duplo clique e muda o visual
+        btnCompilar.setEnabled(false);
+        btnCompilar.setAlpha(0.5f);
+        btnCompilar.setText("Compilando...");
+
+        // 2. Expande o console automaticamente se estiver fechado
+        if (!consoleExpandido) {
+            alternarConsole();
+        }
+
         if (consoleDeSaida != null) {
             consoleDeSaida.limpar();
         }
 
-        // ★ Cria o logger (ConsoleTerminal implementa todos os métodos)
         GerenciadorLogsConsole log = new GerenciadorLogsConsole(contexto, consoleDeSaida);
-
         final long inicio = System.currentTimeMillis();
 
         CompiladorNativo.compilarProjeto(contexto, projeto,
                 new CompiladorNativo.ResultadoCompilacao() {
-
                     @Override
-                    public void aoSucesso(File arquivoSo) {
-                        // Progresso já é logado dentro do CompiladorNativo
-                    }
+                    public void aoSucesso(File arquivoSo) { }
 
                     @Override
                     public void aoErro(String mensagemErro) {
-                        // Resumo já vem no aoFinalizar
+                        handlerUI.post(() -> resetarBotaoCompilar());
                     }
 
                     @Override
                     public void aoFinalizar(int sucessos, int totalAbis, String resumo) {
                         long duracao = System.currentTimeMillis() - inicio;
 
-                        String bloco =
-                                "\n── RESULTADO FINAL ──\n" +
-                                "Projeto:  " + sucessos + "/" + totalAbis
-                                        + " ABI(s) compilada(s)\n" +
+                        String bloco = "\n── RESULTADO FINAL ──\n" +
+                                "Projeto:  " + sucessos + "/" + totalAbis + " ABI(s) compilada(s)\n" +
                                 "Duração:  " + GerenciadorLogsConsole.formatarDuracao(duracao) + "\n";
 
                         new Handler(Looper.getMainLooper()).post(() -> {
@@ -513,19 +459,33 @@ public class MontadorDeEditorComAbas {
                                     consoleDeSaida.aviso(bloco);
                                 }
                             }
+                            resetarBotaoCompilar();
                         });
                     }
                 },
                 log);
     }
-
-    private void compilarArquivoAvulso() {
+    
+    // Helper para reativar o botão
+    private final Handler handlerUI = new Handler(Looper.getMainLooper());
+    private void resetarBotaoCompilar() {
+        btnCompilar.setEnabled(true);
+        btnCompilar.setAlpha(1.0f);
+        btnCompilar.setText("Compilar");
+    }
+    
+        private void compilarArquivoAvulso() {
         File arquivoFonte = abaAtiva.getArquivo();
-        File pastaOut = new File(contexto.getFilesDir(), "out");
-        pastaOut.mkdirs();
+        File pastaOut = Caminhos.out(contexto);
 
         String nomeBase = arquivoFonte.getName().replaceAll("\\.[^.]+$", "");
         File arquivoSaida = new File(pastaOut, "lib" + nomeBase + ".so");
+
+        btnCompilar.setEnabled(false);
+        btnCompilar.setAlpha(0.5f);
+        btnCompilar.setText("Compilando...");
+        
+        if (!consoleExpandido) alternarConsole();
 
         if (consoleDeSaida != null) {
             consoleDeSaida.limpar();
@@ -536,22 +496,16 @@ public class MontadorDeEditorComAbas {
         CompiladorNativo.compilarParaSo(contexto, arquivoFonte, arquivoSaida,
                 new CompiladorNativo.ResultadoCompilacao() {
                     @Override
-                    public void aoSucesso(File arquivoSo) { }
+                    public void aoSucesso(File arquivoSo) {
+                        handlerUI.post(() -> resetarBotaoCompilar());
+                    }
                     @Override
-                    public void aoErro(String mensagemErro) { }
+                    public void aoErro(String mensagemErro) {
+                        handlerUI.post(() -> resetarBotaoCompilar());
+                    }
                 },
                 log);
     }
-
-    private String formatarDuracao(long ms) {
-        if (ms < 1000) return ms + "ms";
-        if (ms < 60_000) return String.format("%.1fs", ms / 1000.0);
-        return (ms / 60_000) + "m " + ((ms % 60_000) / 1000) + "s";
-    }
-
-    // ==========================================================
-    //  Monitor de texto + sintaxe
-    // ==========================================================
 
     private void configurarMonitorDeTexto() {
         campoEditorCodigo.addTextChangedListener(new TextWatcher() {
@@ -611,21 +565,17 @@ public class MontadorDeEditorComAbas {
             sintaxe.aplicarSintaxe(editable);
         }
     }
-        
-        /**
- * Sobe na árvore de pastas procurando um Projeto.properties.
- * Retorna a pasta que contém o arquivo, ou null se não encontrar.
- */
-private File encontrarRaizProjeto(File arquivo) {
-    if (arquivo == null) return null;
-    File pasta = arquivo.getParentFile();
-    while (pasta != null) {
-        File props = new File(pasta, GerenciadorProjetoProperties.NOME_ARQUIVO);
-        if (props.isFile()) return pasta;
-        pasta = pasta.getParentFile();
+
+    private File encontrarRaizProjeto(File arquivo) {
+        if (arquivo == null) return null;
+        File pasta = arquivo.getParentFile();
+        while (pasta != null) {
+            File props = new File(pasta, GerenciadorProjetoProperties.NOME_ARQUIVO);
+            if (props.isFile()) return pasta;
+            pasta = pasta.getParentFile();
+        }
+        return null;
     }
-    return null;
-}
 
     public ConsoleTerminal obterConsoleDeSaida() { return consoleDeSaida; }
 

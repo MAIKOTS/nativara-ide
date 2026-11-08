@@ -43,6 +43,20 @@ public class Projeto {
     // ---------- Dependências ----------
     public List<Dependencia> dependencias = new ArrayList<>();
 
+    /**
+     * Tipo de build do projeto.
+    */
+    public enum TipoBuild {
+        /** Módulo AML — shared library injetada no jogo. (padrão) */
+        MOD,
+
+        /** Programa de console — executado pelo runner. */
+        CONSOLE
+    }
+
+    /** Tipo de build (MOD ou CONSOLE). Padrão: MOD. */
+    public TipoBuild tipoBuild = TipoBuild.MOD;
+    
     // ==========================================================
     //  Construtor
     // ==========================================================

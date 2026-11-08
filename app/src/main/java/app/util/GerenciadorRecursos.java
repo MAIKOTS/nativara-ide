@@ -34,7 +34,7 @@ public final class GerenciadorRecursos {
 
     // ★★★ MUDE AQUI pro seu repositório ★★★
     public static final String URL_MANIFESTO =
-            "https://raw.githubusercontent.com/MAIKOTS/aml-ide-recursos/main/manifest.json";
+            "https://raw.githubusercontent.com/MAIKOTS/nativara-ide-recursos/main/manifest.json";
 
     private static final String PASTA_RECURSOS = "recursos";
 

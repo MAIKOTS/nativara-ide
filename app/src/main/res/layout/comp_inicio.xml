@@ -356,7 +356,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="40dp"
                 android:gravity="center"
-                android:text="AML IDE • v1.00"
+                android:text="Nativara IDE • 2026 • BY MAIKOTS"
                 android:textColor="#3F3F46"
                 android:textSize="11sp" />
 

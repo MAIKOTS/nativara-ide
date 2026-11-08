@@ -1,6 +1,7 @@
 package app;
 
 import android.app.Activity;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.WindowManager;
 
@@ -11,17 +12,9 @@ import app.util.Permissoes;
 import globalclass.settings.AppGlobalSettings;
 import globalclass.settings.LogApp;
 
-/**
- * Activity principal.
- *
- * Responsabilidade: apenas o ciclo de vida do Android.
- * Toda a orquestração de UI fica no ControladorApp.
- */
 public class MainActivity extends Activity {
 
     static {
-        // Força o Android a extrair as libs para nativeLibraryDir/
-        // ANTES de qualquer execução nativa.
         LibsNativas.carregar();
     }
 
@@ -31,22 +24,21 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle estadoInstancia) {
         super.onCreate(estadoInstancia);
 
-        // ---- Bootstrap ----
-        AppGlobalSettings.aplicarModoFullScreen(this);
         AppGlobalSettings.inicializar(this);
 
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        // Permite desenhar atrás das barras no Android 11+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(false);
+        }
 
         ModoImersivo.aplicar(this);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         LogApp.inicializar(this);
-        LogApp.i("─────────────────────────────────");
-        LogApp.i("AML-IDE inicializado com sucesso!");
-        LogApp.i("─────────────────────────────────");
+        LogApp.i("Nativara IDE inicializado com sucesso!");
 
         Permissoes.solicitarArmazenamento(this);
 
-        // ---- Cria e monta a UI ----
         controlador = new ControladorApp(this);
         setContentView(controlador.construirViewPrincipal());
     }
@@ -62,7 +54,9 @@ public class MainActivity extends Activity {
     public void onWindowFocusChanged(boolean temFoco) {
         super.onWindowFocusChanged(temFoco);
         if (temFoco) {
-            controlador.aoGanharFoco();
+            // Sempre que o app ganha foco (fecha teclado, fecha dialogo, volta de outro app),
+            // reaplicamos o modo imersivo.
+            controlador.aoGanharFoco(); 
         }
     }
 }

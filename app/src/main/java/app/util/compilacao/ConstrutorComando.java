@@ -53,6 +53,16 @@ public final class ConstrutorComando {
         cmd.add("-fuse-ld=" + amb.linker.getAbsolutePath());
         cmd.add("--target=" + target);
 
+       if (projeto.tipoBuild == Projeto.TipoBuild.CONSOLE) {
+    // Nada especial necessário — main já é exportado por padrão em -shared
+    if (log != null) {
+        log.info("Build", "Tipo: CONSOLE — main() será o entry point");
+    }
+} else {
+    if (log != null) {
+        log.info("Build", "Tipo: MOD — entry point via AMLMain()");
+    }
+}
         // -------- ARM32: flags específicas --------
         if (abiNorm.contains("armeabi")) {
             cmd.add("-march=armv7-a");

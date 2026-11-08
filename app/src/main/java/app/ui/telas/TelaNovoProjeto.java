@@ -2,9 +2,7 @@ package ui.telas;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
@@ -18,36 +16,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 import app.R;
+import modelo.Caminhos;
 import modelo.GerenciadorProjetoProperties;
 import modelo.Projeto;
 import ui.dialogos.DialogoApp;
 import app.util.GerenciadorDeArquivos;
 
-/**
- * Tela de criação de novo projeto.
- *
- * Formulário completo com todos os campos do Projeto.properties.
- * Ao clicar em CRIAR:
- *   1. Cria a estrutura de pastas
- *   2. Gera o Projeto.properties
- *   3. Cria o main.cpp inicial
- *   4. Chama o callback de sucesso (que navega pra estrutura)
- */
 public class TelaNovoProjeto {
 
     public interface Acoes {
         void aoVoltar();
-        /** Chamado depois de criar com sucesso. */
         void aoCriarProjeto(File pastaProjeto);
     }
-
-    private static final String PASTA_PROJETOS = "AML_IDE/Projetos";
 
     private final Context ctx;
     private final Acoes acoes;
     private final Handler handlerUI = new Handler(Looper.getMainLooper());
 
-    // Views
     private View raizView;
     private EditText campoNome, campoAutor, campoDescricao, campoVersao;
     private EditText campoFlags, campoFontes, campoIncludes, campoLibs, campoDependencias;
@@ -56,7 +41,6 @@ public class TelaNovoProjeto {
     private TextView btnCriar;
     private TextView status;
 
-    // Estado dos chips
     private boolean abiArm64Ativa = true;
     private boolean abiArm32Ativa = true;
 
@@ -65,15 +49,10 @@ public class TelaNovoProjeto {
         this.acoes = acoes;
     }
 
-    // ==========================================================
-    //  Construção
-    // ==========================================================
-
     public View construir() {
         raizView = LayoutInflater.from(ctx)
                 .inflate(R.layout.tela_novo_projeto, null, false);
 
-        // Bind
         campoNome         = raizView.findViewById(R.id.novoProjetoNome);
         campoAutor        = raizView.findViewById(R.id.novoProjetoAutor);
         campoDescricao    = raizView.findViewById(R.id.novoProjetoDescricao);
@@ -91,14 +70,12 @@ public class TelaNovoProjeto {
         btnCriar          = raizView.findViewById(R.id.novoProjetoBtnCriar);
         status            = raizView.findViewById(R.id.novoProjetoStatus);
 
-        // Valores padrão
         campoVersao.setText("1.0.0");
         campoFlags.setText("");
-        campoIncludes.setText("include");
+        campoIncludes.setText("include,mod,src");
 
         atualizarChipsAbi();
 
-        // Listeners
         raizView.findViewById(R.id.novoProjetoBtnVoltar).setOnClickListener(v -> {
             if (acoes != null) acoes.aoVoltar();
         });
@@ -115,7 +92,6 @@ public class TelaNovoProjeto {
             atualizarChipsAbi();
         });
 
-        // Pickers (reaproveitando DialogoApp.selecaoUnica)
         campoStd.setOnClickListener(v -> DialogoApp.selecaoUnica(ctx,
                 "Padrão C++",
                 new String[]{"c++11", "c++14", "c++17", "c++20", "c++23"},
@@ -135,10 +111,6 @@ public class TelaNovoProjeto {
 
         return raizView;
     }
-
-    // ==========================================================
-    //  Chips de ABI
-    // ==========================================================
 
     private void garantirPeloMenosUmaAbi() {
         if (!abiArm64Ativa && !abiArm32Ativa) {
@@ -170,12 +142,7 @@ public class TelaNovoProjeto {
         chip.setBackground(fundo);
     }
 
-    // ==========================================================
-    //  Criação
-    // ==========================================================
-
     private void criarProjeto() {
-        // ---------- Validações ----------
         String nome = campoNome.getText().toString().trim();
         if (nome.isEmpty()) {
             erro("Digite um nome para o projeto.");
@@ -197,22 +164,13 @@ public class TelaNovoProjeto {
         String versao = campoVersao.getText().toString().trim();
         if (versao.isEmpty()) versao = "1.0.0";
 
-        // ---------- Destino ----------
-        File pastaProjetos = new File(
-                Environment.getExternalStorageDirectory(), PASTA_PROJETOS);
-        if (!pastaProjetos.exists() && !pastaProjetos.mkdirs()) {
-            erro("Não foi possível criar a pasta de projetos.");
-            return;
-        }
-
-        File pastaProjeto = new File(pastaProjetos, nome);
+        File pastaProjeto = Caminhos.projeto(nome);
         if (pastaProjeto.exists()) {
             erro("Já existe um projeto com esse nome.");
             campoNome.requestFocus();
             return;
         }
 
-        // ---------- Monta Projeto ----------
         Projeto p = new Projeto();
         p.pastaRaiz = pastaProjeto;
         p.nome      = nome;
@@ -221,19 +179,14 @@ public class TelaNovoProjeto {
         p.descricao = descricao;
         p.libNome   = "lib" + nome.toLowerCase().replaceAll("[^a-z0-9_]", "_");
 
-        // ABIs
         p.abis = new ArrayList<>();
         if (abiArm64Ativa) p.abis.add("arm64-v8a");
         if (abiArm32Ativa) p.abis.add("armeabi-v7a");
 
-        // API (por enquanto só 21)
         p.api = 21;
-
-        // Compilador
         p.std        = campoStd.getText().toString().trim();
         p.otimizacao = campoOtimizacao.getText().toString().trim();
 
-        // Listas
         p.flags    = parseLista(campoFlags.getText().toString());
         p.fontes   = parseLista(campoFontes.getText().toString());
         p.includes = parseLista(campoIncludes.getText().toString());
@@ -241,7 +194,6 @@ public class TelaNovoProjeto {
         p.dependencias = parseDependencias(
                 campoDependencias.getText().toString(), pastaProjeto);
 
-        // ---------- Cria estrutura ----------
         btnCriar.setEnabled(false);
         btnCriar.setAlpha(0.5f);
         status.setText("Criando...");
@@ -273,40 +225,28 @@ public class TelaNovoProjeto {
         }, "criar-projeto").start();
     }
 
-    /**
-     * Cria a estrutura em disco:
-     *   Projeto/
-     *   ├── Projeto.properties
-     *   ├── src/main.cpp
-     *   ├── include/
-     *   ├── deps/
-     *   └── lib/<abi>/
-     */
     private boolean construirEstrutura(Projeto p) {
         try {
             File raiz = p.pastaRaiz;
             if (!raiz.mkdirs() && !raiz.isDirectory()) return false;
 
-            File src     = new File(raiz, "src");
-            File include = new File(raiz, "include");
-            File deps    = new File(raiz, "deps");
-            File lib     = new File(raiz, "lib");
+            File src     = new File(raiz, Caminhos.SRC);
+            File include = new File(raiz, Caminhos.INCLUDE);
+            File deps    = new File(raiz, Caminhos.DEPS);
+            File lib     = new File(raiz, Caminhos.LIB);
 
             src.mkdirs();
             include.mkdirs();
             deps.mkdirs();
             lib.mkdirs();
 
-            // Subpastas de ABI
             for (String abi : p.abis) {
                 String abiPasta = Projeto.normalizarAbi(abi);
                 new File(lib, abiPasta).mkdirs();
             }
 
-            // Projeto.properties
             if (!GerenciadorProjetoProperties.salvar(p)) return false;
 
-            // main.cpp inicial
             File mainCpp = new File(src, "main.cpp");
             String codigo =
                     "// " + p.nome + "\n" +
@@ -328,10 +268,6 @@ public class TelaNovoProjeto {
             return false;
         }
     }
-
-    // ==========================================================
-    //  Parsers
-    // ==========================================================
 
     private List<String> parseLista(String texto) {
         List<String> out = new ArrayList<>();
@@ -367,7 +303,7 @@ public class TelaNovoProjeto {
             if (url.endsWith(".git")) url = url.substring(0, url.length() - 4);
             int slash = url.lastIndexOf('/');
             d.nomeRepo = (slash >= 0) ? url.substring(slash + 1) : url;
-            d.pastaLocal = new File(pastaProjeto, "deps/" + d.nomeRepo);
+            d.pastaLocal = new File(pastaProjeto, Caminhos.DEPS + "/" + d.nomeRepo);
 
             out.add(d);
         }
