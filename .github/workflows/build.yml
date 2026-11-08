@@ -2,9 +2,9 @@ name: Build APK
 
 on:
   push:
-    branches: [ MaikoTS ]
+    branches: [ MaikOTS ]
   pull_request:
-    branches: [ MaikoTS ]
+    branches: [ MaikOTS ]
   workflow_dispatch:
 
 jobs:
